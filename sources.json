@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    {
+      "id": "anthropics-skills",
+      "name": "Anthropic Agent Skills",
+      "repo": "https://github.com/anthropics/skills.git",
+      "ref": "main",
+      "layout": "skills-dir",
+      "roots": ["skills"],
+      "trust": "third-party",
+      "description": "Agent Skills published by Anthropic; each directory holds a SKILL.md."
+    },
+    {
+      "id": "claude-plugins-official",
+      "name": "Claude Code official plugin marketplace",
+      "repo": "https://github.com/anthropics/claude-plugins-official.git",
+      "ref": "main",
+      "layout": "plugin-marketplace",
+      "roots": ["plugins", "external_plugins"],
+      "trust": "third-party",
+      "description": "Claude Code plugins; a plugin's skills are under <plugin>/skills/<name>/SKILL.md. Only skills are importable, not plugin hooks, MCP servers or agents."
+    }
+  ]
+}

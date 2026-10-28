@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "skills": [
+    {
+      "name": "aikido-skill-example",
+      "description": "Minimal AI-KIDO skill showing the expected SKILL.md structure; safe to install and remove.",
+      "version": "1.0.0",
+      "category": "example",
+      "path": "skills/aikido-skill-example"
+    },
+    {
+      "name": "jira",
+      "description": "Bidirectional JIRA Cloud sync, Agile KPI analysis and interactive HTML reports for the AI-KIDO Memory Bank (/jira-* commands).",
+      "version": "1.0.0",
+      "category": "integration",
+      "path": "skills/jira"
+    },
+    {
+      "name": "confluence",
+      "description": "Bidirectional Markdown <-> Confluence Cloud sync with YAML metadata and last-write-wins (/confluence-* commands).",
+      "version": "1.0.0",
+      "category": "integration",
+      "path": "skills/confluence"
+    }
+  ]
+}
