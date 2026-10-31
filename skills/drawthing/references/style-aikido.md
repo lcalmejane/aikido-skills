@@ -9,11 +9,11 @@ Settings read from the metadata of the images already published on the site
 |---|---|
 | Model | `qwen_image_2512_bf16_i8x.ckpt` |
 | Sampler | Euler A Trailing |
-| Steps | 16 |
+| Steps | 24 for final images (16 was too soft on fine lines; use 8 only for tests) |
 | Guidance scale | 4.0 |
 | Seed mode | Scale Alike |
 | Typical sizes | 1408×704 (2:1 banner), 1728×960 (16:9), both multiples of 64 |
-| Duration | about 5 minutes per image on the author's Mac |
+| Duration | at 24 steps: about 3 minutes for a 512×512 icon, about 8 minutes for a 1664×832 banner on the author's Mac |
 
 ## Palette
 
@@ -51,5 +51,7 @@ for mobile crops."
 - The site puts a dark gradient veil over header images; the artwork can stay fairly
   luminous at the edges.
 - Always test the prompt at `--width 512 --height 256 --steps 8` first (about a minute).
+- `--from ref.png` copies the reference's steps: pass `--steps 24` explicitly when the
+  reference was made at 16.
 - Do not ask for text, logos or faces: the model draws garbled letters.
 - Publish WebP (`cwebp -q 82`) and keep the PNG as the lossless original.
