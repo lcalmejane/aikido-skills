@@ -16,6 +16,13 @@
       "path": "skills/jira"
     },
     {
+      "name": "drawthing",
+      "description": "Generate images locally with the Draw Things macOS app through its HTTP API (txt2img, prompt reuse from an existing image, WebP export) in the AI-KIDO website style.",
+      "version": "1.0.0",
+      "category": "generation",
+      "path": "skills/drawthing"
+    },
+    {
       "name": "confluence",
       "description": "Bidirectional Markdown <-> Confluence Cloud sync with YAML metadata and last-write-wins (/confluence-* commands).",
       "version": "1.0.0",

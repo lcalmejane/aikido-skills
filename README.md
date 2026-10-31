@@ -3,6 +3,15 @@
 Skills for AI-KIDO, installable with `/skill-manage`, plus a list of external
 repositories from which compatible skills can be imported.
 
+## Published skills
+
+| Skill | Category | Purpose |
+|---|---|---|
+| `jira` | integration | Bidirectional JIRA Cloud sync, Agile KPIs, HTML reports |
+| `confluence` | integration | Bidirectional Markdown <-> Confluence Cloud sync |
+| `drawthing` | generation | Local image generation with the Draw Things macOS app (HTTP API), AI-KIDO website style |
+| `aikido-skill-example` | example | Minimal skeleton to copy |
+
 ## Layout
 
 | Path | Purpose |
