@@ -63,11 +63,13 @@ the app also opens an unrelated internal port that does not answer HTTP.
 | `generate` | Create an image: `--out` (required, `.png`), and `--prompt`, `--prompt-file` or `--from` |
 | `inspect <png>` | Print the prompt, seed, model and steps stored in a Draw Things PNG |
 
-`generate` options: `--width`, `--height`, `--seed`, `--steps`, `--guidance`, `--model`,
-`--negative`, `--plain`, `--webp`, `--quality`, `--sidecar`, `--dry-run`, `--timeout` (seconds, default 900).
+`generate` options: `--width`, `--height`, `--seed`, `--steps`, `--guidance`, `--sampler`, `--shift`,
+`--model`, `--negative`, `--plain`, `--webp`, `--quality`, `--sidecar`, `--dry-run`, `--timeout` (seconds, default 900).
 
-- `--from ref.png` reuses the prompt, seed, model, steps and guidance of an existing Draw
-  Things PNG. Any other flag overrides it. This is how to regenerate a site image at a new size.
+- `--from ref.png` reuses the prompt, seed, model, size, steps, guidance, sampler and shift of an
+  existing Draw Things PNG. Any other flag overrides it. This is how to regenerate a site image at
+  a new size, or to make a new image in the exact style of a reference (pass a new `--prompt` and
+  `--seed`; the size and settings come from the reference, e.g. `--from C1.png` gives 512x512 icons).
 - `--dry-run` builds the request and prints it without generating.
 - `--plain` removes the app's LoRAs and ControlNets. Without it, the app's current settings are
   the base of every request, so a LoRA enabled in the app will be applied.

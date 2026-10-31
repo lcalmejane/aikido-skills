@@ -52,6 +52,8 @@ export function buildPayload(base, o = {}) {
     const h = assertSize('height', o.height);
     Object.assign(payload, { height: h, original_height: h, target_height: h });
   }
+  if (o.sampler !== undefined) payload.sampler = o.sampler;
+  if (o.shift !== undefined) payload.shift = Number(o.shift);
   if (o.seed !== undefined) payload.seed = Number(o.seed);
   if (o.steps !== undefined) payload.steps = Number(o.steps);
   if (o.guidance !== undefined) payload.guidance_scale = Number(o.guidance);
@@ -217,11 +219,14 @@ async function cmdGenerate(opts) {
   if (!prompt) throw new Error('Provide --prompt, --prompt-file or --from <png>');
 
   const seed = opts.seed !== undefined ? Number(opts.seed) : from?.seed ?? Math.floor(Math.random() * 2 ** 31);
+  const fromSize = /^(\d+)x(\d+)$/.exec(from?.size ?? '');
   const overrides = {
     prompt,
     negative: opts.negative === undefined ? from?.negative_prompt : opts.negative,
-    width: opts.width,
-    height: opts.height,
+    width: opts.width ?? fromSize?.[1],
+    height: opts.height ?? fromSize?.[2],
+    sampler: opts.sampler ?? from?.sampler,
+    shift: opts.shift ?? from?.shift,
     seed,
     steps: opts.steps ?? from?.steps,
     guidance: opts.guidance ?? from?.guidance_scale,
