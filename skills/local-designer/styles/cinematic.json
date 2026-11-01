@@ -1,0 +1,26 @@
+{
+  "name": "cinematic",
+  "description": "Film still, dramatic lighting, teal and orange grading, anamorphic feel",
+  "category": "photo",
+  "tags": [
+    "film",
+    "cinematic",
+    "dramatic",
+    "mood",
+    "banner",
+    "dark"
+  ],
+  "use_cases": [
+    "hero banner",
+    "teaser",
+    "storytelling"
+  ],
+  "look": "film still with teal and orange grading and haze",
+  "template": "A cinematic film still of {subject}. Dramatic directional lighting, moody atmosphere, teal and orange colour grading, anamorphic lens, subtle film grain, wide composition, volumetric haze.",
+  "negative": "cartoon, flat colours, text, watermark, subtitles, overexposed, low quality",
+  "params": {
+    "steps": 24,
+    "guidance": 4
+  },
+  "thumb_subject": "a lone lighthouse on a cliff at dawn, waves crashing below"
+}

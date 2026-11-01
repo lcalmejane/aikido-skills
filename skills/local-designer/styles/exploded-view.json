@@ -1,0 +1,30 @@
+{
+  "name": "exploded-view",
+  "description": "Exploded-view technical illustration, dotted guides, soft cel shading (manuals and spec sheets)",
+  "category": "technical",
+  "tags": [
+    "exploded",
+    "technical",
+    "manual",
+    "assembly",
+    "product",
+    "mechanical",
+    "hardware",
+    "patent",
+    "illustration"
+  ],
+  "use_cases": [
+    "user manual",
+    "spec sheet",
+    "product architecture",
+    "service guide"
+  ],
+  "look": "technical exploded-view illustration with dotted guide lines",
+  "template": "A technical exploded-view illustration of {subject}. Components separated and stacked along a single central vertical axis with clear gaps between them, thin dotted guide lines linking the parts in order of assembly, crisp dark outlines, soft cel-shaded grey and blue materials, light grey background, precise consistent perspective, user-manual and patent illustration quality, no text, no numbers.",
+  "negative": "photo, realistic, text, letters, numbers, watermark, blurry, messy, heavy shading",
+  "params": {
+    "steps": 24,
+    "guidance": 4
+  },
+  "thumb_subject": "a mechanical wristwatch"
+}

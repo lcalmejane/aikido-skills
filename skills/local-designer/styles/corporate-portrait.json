@@ -1,0 +1,30 @@
+{
+  "name": "corporate-portrait",
+  "description": "Professional corporate headshot, soft studio light, blurred office background",
+  "category": "photo",
+  "tags": [
+    "corporate",
+    "portrait",
+    "headshot",
+    "executive",
+    "professional",
+    "people",
+    "team",
+    "linkedin"
+  ],
+  "use_cases": [
+    "team page",
+    "leadership bio",
+    "press kit",
+    "speaker slide"
+  ],
+  "look": "professional corporate headshot with soft studio light",
+  "template": "A professional corporate headshot of {subject}. Soft diffused studio key light with gentle fill, neutral blurred modern office background, 85mm portrait lens at f/2.8, natural confident expression, clean business attire, accurate skin tones, sharp eyes, subtle colour grade, editorial quality.",
+  "negative": "cartoon, illustration, painting, text, letters, logo, watermark, distorted anatomy, extra fingers, oversaturated, harsh flash",
+  "params": {
+    "steps": 24,
+    "guidance": 4
+  },
+  "thumb_subject": "a confident businesswoman in her forties wearing a navy blazer, looking at the camera",
+  "notes": "Synthetic people only. Never prompt for a real, named person."
+}

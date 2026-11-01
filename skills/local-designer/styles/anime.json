@@ -1,0 +1,25 @@
+{
+  "name": "anime",
+  "description": "Anime key visual, cel shading, vivid sky and light",
+  "category": "stylized",
+  "tags": [
+    "anime",
+    "cel",
+    "manga",
+    "vivid",
+    "character"
+  ],
+  "use_cases": [
+    "key visual",
+    "game art",
+    "youth content"
+  ],
+  "look": "anime key visual with cel shading and a vivid sky",
+  "template": "An anime key visual of {subject}. Cel shading, clean line art, vivid saturated colours, dramatic sky with soft clouds, glowing highlights, detailed painted background in the style of a feature animation film.",
+  "negative": "photo, realistic, 3d render, western cartoon, text, watermark, extra limbs, deformed, low quality",
+  "params": {
+    "steps": 24,
+    "guidance": 4
+  },
+  "thumb_subject": "a lone lighthouse on a cliff at dawn, waves crashing below"
+}

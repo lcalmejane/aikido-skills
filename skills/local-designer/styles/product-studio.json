@@ -1,0 +1,29 @@
+{
+  "name": "product-studio",
+  "description": "Studio packshot on a seamless grey backdrop with soft shadows and room for text",
+  "category": "photo",
+  "tags": [
+    "product",
+    "packshot",
+    "catalog",
+    "studio",
+    "ecommerce",
+    "hardware",
+    "object",
+    "commercial"
+  ],
+  "use_cases": [
+    "product page",
+    "catalogue",
+    "hardware proposal",
+    "spec sheet cover"
+  ],
+  "look": "studio product photograph on a seamless light backdrop",
+  "template": "A professional studio product photograph of {subject}. Seamless light grey backdrop, large softbox lighting with soft gradient shadows, crisp reflections, centred composition with generous negative space for text, 100mm macro lens, true-to-life colours, commercial catalogue quality.",
+  "negative": "cartoon, illustration, painting, text, letters, logo, watermark, distorted anatomy, extra fingers, oversaturated, harsh flash",
+  "params": {
+    "steps": 24,
+    "guidance": 4
+  },
+  "thumb_subject": "a pair of minimalist wireless headphones"
+}

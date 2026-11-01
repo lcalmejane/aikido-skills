@@ -1,0 +1,26 @@
+{
+  "name": "line-art",
+  "description": "Black ink line drawing on white, no shading",
+  "category": "drawing",
+  "tags": [
+    "line",
+    "ink",
+    "outline",
+    "minimal",
+    "monochrome",
+    "sketch"
+  ],
+  "use_cases": [
+    "colouring page",
+    "logo sketch",
+    "light illustration"
+  ],
+  "look": "minimalist black ink line drawing on white",
+  "template": "A minimalist black ink line drawing of {subject}. Single continuous clean line, uniform stroke weight, no shading, no fill, pure white background, elegant and simple.",
+  "negative": "colour, shading, gradient, photo, 3d render, text, watermark, sketchy, messy",
+  "params": {
+    "steps": 24,
+    "guidance": 4
+  },
+  "thumb_subject": "a lone lighthouse on a cliff at dawn, waves crashing below"
+}

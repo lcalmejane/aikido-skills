@@ -1,0 +1,26 @@
+{
+  "name": "sumi-e",
+  "description": "Japanese ink wash, brush strokes, lots of empty space",
+  "category": "painting",
+  "tags": [
+    "ink",
+    "japanese",
+    "minimal",
+    "calm",
+    "zen",
+    "monochrome"
+  ],
+  "use_cases": [
+    "calm artwork",
+    "wellbeing",
+    "cultural content"
+  ],
+  "look": "Japanese ink wash with large empty space",
+  "template": "A Japanese sumi-e ink wash painting of {subject}. Expressive black ink brush strokes, varying line weight, soft grey washes, rice paper texture, minimalist composition with large empty space, a single small red seal-like accent.",
+  "negative": "photo, 3d render, colourful, busy background, calligraphy, text, letters, watermark",
+  "params": {
+    "steps": 24,
+    "guidance": 4
+  },
+  "thumb_subject": "a lone lighthouse on a cliff at dawn, waves crashing below"
+}

@@ -1,0 +1,25 @@
+{
+  "name": "watercolor",
+  "description": "Loose watercolour on textured paper, soft bleeding pigments",
+  "category": "painting",
+  "tags": [
+    "watercolor",
+    "soft",
+    "paint",
+    "organic",
+    "calm"
+  ],
+  "use_cases": [
+    "soft illustration",
+    "invitation",
+    "book cover"
+  ],
+  "look": "loose watercolour wash on cold-press paper",
+  "template": "A watercolour painting of {subject}. Loose wet-on-wet washes, soft bleeding pigments, visible cold-press paper texture, delicate pencil underdrawing, generous white paper margins, gentle palette.",
+  "negative": "photo, 3d render, harsh outlines, digital look, text, watermark, oversaturated",
+  "params": {
+    "steps": 24,
+    "guidance": 4
+  },
+  "thumb_subject": "a lone lighthouse on a cliff at dawn, waves crashing below"
+}

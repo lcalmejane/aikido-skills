@@ -1,0 +1,33 @@
+{
+  "name": "isometric-flat",
+  "description": "Flat isometric vector scene, three-tone faces, tech palette (architecture and process visuals)",
+  "category": "vector",
+  "tags": [
+    "isometric",
+    "vector",
+    "flat",
+    "tech",
+    "infrastructure",
+    "diagram",
+    "architecture",
+    "saas",
+    "it",
+    "network",
+    "process",
+    "cloud"
+  ],
+  "use_cases": [
+    "architecture schema",
+    "IT proposal",
+    "process overview",
+    "landing hero"
+  ],
+  "look": "flat isometric vector illustration with three-tone faces",
+  "template": "A flat isometric vector illustration of {subject}. 30-degree isometric projection, clean solid colour faces with three tones per object for top, left and right, crisp edges, no outlines, soft long shadow, modern tech palette of blue, teal and orange, plain light background, infographic quality.",
+  "negative": "photo, realistic, 3d render, noisy texture, text, letters, numbers, watermark, cluttered, blurry",
+  "params": {
+    "steps": 24,
+    "guidance": 4
+  },
+  "thumb_subject": "a cloud server connected to laptops and a mobile phone"
+}

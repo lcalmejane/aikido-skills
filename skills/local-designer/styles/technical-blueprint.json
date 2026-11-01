@@ -1,0 +1,30 @@
+{
+  "name": "technical-blueprint",
+  "description": "White linework on blueprint blue, orthographic views, callouts without text",
+  "category": "technical",
+  "tags": [
+    "blueprint",
+    "engineering",
+    "plan",
+    "technical",
+    "schematic",
+    "industrial",
+    "architecture",
+    "cad",
+    "drawing"
+  ],
+  "use_cases": [
+    "engineering proposal",
+    "technical documentation",
+    "industrial cover",
+    "patent-style figure"
+  ],
+  "look": "technical blueprint drawing with white linework on blueprint blue grid paper",
+  "template": "A technical blueprint drawing of {subject}. White and light-cyan thin lines on a deep blue grid paper background, orthographic views, dimension lines and callout leaders without readable text, precise engineering linework, cross-section details, drafting style.",
+  "negative": "photo, realistic, colourful, soft shading, readable text, letters, numbers, watermark",
+  "params": {
+    "steps": 24,
+    "guidance": 4
+  },
+  "thumb_subject": "a small industrial robot arm"
+}

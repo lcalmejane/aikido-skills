@@ -1,0 +1,29 @@
+{
+  "name": "icon-flat",
+  "description": "Consistent set of rounded glyph icons on white, two colours",
+  "category": "vector",
+  "tags": [
+    "icon",
+    "set",
+    "glyph",
+    "ui",
+    "pictogram",
+    "flat",
+    "vector",
+    "presentation"
+  ],
+  "use_cases": [
+    "slide icons",
+    "feature list",
+    "web UI",
+    "brand kit"
+  ],
+  "look": "flat design icon set of rounded glyph icons",
+  "template": "A flat design icon set of {subject}. Evenly spaced grid of simple rounded glyph icons, uniform stroke weight, two-colour palette with one accent colour, consistent corner radius, precise geometric construction, centred on a plain white background, no text.",
+  "negative": "photo, realistic, 3d render, noisy texture, text, letters, numbers, watermark, cluttered, blurry",
+  "params": {
+    "steps": 24,
+    "guidance": 4
+  },
+  "thumb_subject": "business tools: a calendar, a chart, a mail, a shield, a gear and a cloud"
+}

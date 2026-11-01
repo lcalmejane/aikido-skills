@@ -1,0 +1,33 @@
+{
+  "name": "infographic-flat",
+  "description": "Pictograms in a clear flow, three brand colours, generous white space, no text",
+  "category": "vector",
+  "tags": [
+    "infographic",
+    "process",
+    "steps",
+    "icons",
+    "flow",
+    "presentation",
+    "slide",
+    "data",
+    "roadmap",
+    "vector",
+    "flat"
+  ],
+  "use_cases": [
+    "roadmap slide",
+    "process explanation",
+    "KPI slide visual",
+    "steps diagram"
+  ],
+  "look": "clean infographic-style flat vector illustration with pictograms in a clear flow",
+  "template": "A clean infographic-style flat vector illustration of {subject}. Simple pictograms and icons arranged in a clear left-to-right flow, large readable shapes, consistent rounded corners, limited palette of three brand colours plus neutral grey, generous white space, no text, no numbers, presentation slide quality.",
+  "negative": "photo, realistic, 3d render, noisy texture, text, letters, numbers, watermark, cluttered, blurry",
+  "params": {
+    "steps": 24,
+    "guidance": 4
+  },
+  "thumb_subject": "a three-step process from idea to prototype to launch",
+  "notes": "Models draw text badly: generate the pictograms, add labels and numbers in the slide tool."
+}

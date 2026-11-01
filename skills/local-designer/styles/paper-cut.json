@@ -1,0 +1,25 @@
+{
+  "name": "paper-cut",
+  "description": "Layered paper-cut diorama with soft depth shadows",
+  "category": "craft",
+  "tags": [
+    "paper",
+    "craft",
+    "layered",
+    "handmade",
+    "warm"
+  ],
+  "use_cases": [
+    "poster",
+    "packaging",
+    "editorial header"
+  ],
+  "look": "layered paper-cut diorama with soft shadows",
+  "template": "A layered paper-cut art piece of {subject}. Stacked sheets of coloured paper, soft drop shadows between layers, visible paper fibres, warm harmonious palette, handcrafted diorama look, centred composition.",
+  "negative": "photo, painting, glossy, text, letters, watermark, flat, blurry",
+  "params": {
+    "steps": 24,
+    "guidance": 4
+  },
+  "thumb_subject": "a lone lighthouse on a cliff at dawn, waves crashing below"
+}

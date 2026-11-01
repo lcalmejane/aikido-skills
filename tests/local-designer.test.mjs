@@ -1,12 +1,21 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  applyStyle,
   assertSize,
+  buildJobs,
   buildPayload,
   decodeEntities,
+  expandVary,
   extractPngMetadata,
+  insideGitRepo,
+  isLocalUrl,
+  loadStyles,
   parseArgs,
-} from '../skills/drawthing/scripts/drawthing.mjs';
+  parseLora,
+  parseSetting,
+  renderIndexHtml,
+} from '../skills/local-designer/scripts/local-designer.mjs';
 
 const SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 
@@ -85,4 +94,70 @@ test('extractPngMetadata falls back to the text description', () => {
 test('extractPngMetadata rejects non-PNG input and returns null without XMP', () => {
   assert.throws(() => extractPngMetadata(Buffer.from('nope nope nope')), /Not a PNG/);
   assert.equal(extractPngMetadata(Buffer.concat([SIGNATURE, chunk('IEND', Buffer.alloc(0))])), null);
+});
+
+test('parseArgs collects repeatable flags', () => {
+  const { opts } = parseArgs(['generate', '--lora', 'a.ckpt:0.5', '--lora', 'b.ckpt', '--set', 'x=1', '--vary', 'steps=8,16']);
+  assert.deepEqual(opts.lora, ['a.ckpt:0.5', 'b.ckpt']);
+  assert.deepEqual(opts.set, ['x=1']);
+  assert.deepEqual(opts.vary, ['steps=8,16']);
+  assert.throws(() => parseArgs(['generate', '--lora']), /needs a value/);
+});
+
+test('parseSetting parses JSON values and keeps strings', () => {
+  assert.deepEqual(parseSetting('tiled_decoding=true'), ['tiled_decoding', true]);
+  assert.deepEqual(parseSetting('shift=4.5'), ['shift', 4.5]);
+  assert.deepEqual(parseSetting('sampler=DPM++ 2M'), ['sampler', 'DPM++ 2M']);
+  assert.throws(() => parseSetting('novalue'), /key=value/);
+});
+
+test('parseLora reads an optional weight', () => {
+  assert.deepEqual(parseLora('x.ckpt:0.6'), { file: 'x.ckpt', weight: 0.6 });
+  assert.deepEqual(parseLora('x.ckpt'), { file: 'x.ckpt', weight: 1 });
+});
+
+test('buildPayload handles img2img, loras and raw settings', () => {
+  const p = buildPayload({ loras: [{ file: 'app.ckpt', weight: 1 }] }, { initImage: 'AAA', strength: '0.6', loras: [{ file: 'n.ckpt', weight: 0.5 }], set: { tiled_decoding: true }, seedMode: 'Scale Alike' });
+  assert.deepEqual(p.init_images, ['AAA']);
+  assert.equal(p.strength, 0.6);
+  assert.equal(p.loras.length, 2);
+  assert.equal(p.tiled_decoding, true);
+  assert.equal(p.seed_mode, 'Scale Alike');
+  const plain = buildPayload({ loras: [{ file: 'app.ckpt' }] }, { plain: true, loras: [{ file: 'n.ckpt', weight: 1 }] });
+  assert.deepEqual(plain.loras, [{ file: 'n.ckpt', weight: 1 }]);
+  assert.throws(() => buildPayload({}, { steps: 'abc' }), /number/);
+});
+
+test('bundled styles are valid and carry no project branding', () => {
+  const styles = loadStyles();
+  assert.ok(Object.keys(styles).length >= 10);
+  for (const s of Object.values(styles)) {
+    assert.ok(s.name && s.description && s.template.includes('{subject}'), s.name);
+    assert.doesNotMatch(JSON.stringify(s), /ai-?kido|aikido/i);
+  }
+  assert.match(applyStyle(styles.watercolor, 'a fox'), /watercolour painting of a fox\./);
+  assert.equal(applyStyle({ template: 'moody' }, 'a fox'), 'a fox. moody');
+});
+
+test('expandVary and buildJobs make the cartesian product', () => {
+  assert.equal(expandVary(['steps=8,16', 'guidance=3,5']).length, 4);
+  assert.deepEqual(expandVary(), [{}]);
+  assert.throws(() => expandVary(['bad']), /key=v1/);
+  const jobs = buildJobs({ styles: ['a', 'b'], seeds: ['1', '2'], vary: ['steps=8,16'] });
+  assert.equal(jobs.length, 8);
+  assert.equal(new Set(jobs.map((j) => j.name)).size, 8);
+});
+
+test('isLocalUrl and insideGitRepo', () => {
+  assert.equal(isLocalUrl('http://127.0.0.1:7860'), true);
+  assert.equal(isLocalUrl('http://192.168.1.2:7860'), false);
+  assert.equal(insideGitRepo(new URL('../skills', import.meta.url).pathname), true);
+  assert.equal(insideGitRepo('/tmp/local-designer-not-a-repo-xyz'), false);
+});
+
+test('renderIndexHtml escapes content and lists errors', () => {
+  const html = renderIndexHtml('t<1>', [{ name: 'a', file: 'a.png', label: 'x', prompt: '<b>' }, { name: 'b', file: 'b.png', error: 'boom' }]);
+  assert.match(html, /t&lt;1&gt;/);
+  assert.match(html, /&lt;b&gt;/);
+  assert.match(html, /class="err">boom/);
 });

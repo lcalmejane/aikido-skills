@@ -1,0 +1,26 @@
+{
+  "name": "isometric-3d",
+  "description": "Isometric 3D render, soft studio light, clay/plastic look",
+  "category": "3d",
+  "tags": [
+    "isometric",
+    "3d",
+    "miniature",
+    "concept",
+    "diagram",
+    "pastel"
+  ],
+  "use_cases": [
+    "concept visual",
+    "process diagram",
+    "product explainer"
+  ],
+  "look": "isometric clay-like 3D miniature",
+  "template": "An isometric 3D render of {subject}. Miniature diorama, smooth clay-like materials, soft studio lighting, soft shadows, pastel colour palette, clean plain background, high detail, tilt-shift feel.",
+  "negative": "photo, flat 2d, text, letters, watermark, harsh shadows, cluttered, perspective distortion",
+  "params": {
+    "steps": 24,
+    "guidance": 4
+  },
+  "thumb_subject": "a lone lighthouse on a cliff at dawn, waves crashing below"
+}

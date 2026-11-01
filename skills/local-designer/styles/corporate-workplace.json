@@ -1,0 +1,31 @@
+{
+  "name": "corporate-workplace",
+  "description": "Candid bright modern office, collaborating colleagues, stock-photography look",
+  "category": "photo",
+  "tags": [
+    "corporate",
+    "office",
+    "team",
+    "collaboration",
+    "meeting",
+    "workplace",
+    "business",
+    "people",
+    "stock"
+  ],
+  "use_cases": [
+    "about-us page",
+    "proposal cover",
+    "recruitment",
+    "slide background"
+  ],
+  "look": "candid documentary corporate photograph of a bright modern office",
+  "template": "A candid documentary-style corporate photograph of {subject}. Bright modern open-plan office with large windows, natural daylight, diverse colleagues collaborating, shallow depth of field, 35mm lens, clean uncluttered desks, calm blue and warm wood palette, authentic stock-photography look, sharp focus on the main subject.",
+  "negative": "cartoon, illustration, painting, text, letters, logo, watermark, distorted anatomy, extra fingers, oversaturated, harsh flash",
+  "params": {
+    "steps": 24,
+    "guidance": 4
+  },
+  "thumb_subject": "three colleagues reviewing a project on a laptop around a table",
+  "notes": "Synthetic people only."
+}

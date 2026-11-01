@@ -1,0 +1,30 @@
+{
+  "name": "riso-duotone",
+  "description": "Two-colour risograph print, halftone grain, slight misregistration",
+  "category": "editorial",
+  "tags": [
+    "riso",
+    "risograph",
+    "duotone",
+    "print",
+    "poster",
+    "editorial",
+    "halftone",
+    "playful",
+    "retro"
+  ],
+  "use_cases": [
+    "poster",
+    "editorial header",
+    "event flyer",
+    "report section opener"
+  ],
+  "look": "two-colour risograph print with halftone grain and slight misregistration",
+  "template": "A two-colour risograph print illustration of {subject}. Overprinted fluorescent pink and teal ink on warm off-white paper, visible halftone grain, slight misregistration, bold simple shapes, playful editorial poster feel.",
+  "negative": "photo, realistic, 3d render, gradients, more than two colours, text, letters, watermark",
+  "params": {
+    "steps": 24,
+    "guidance": 4
+  },
+  "thumb_subject": "a city skyline with a rising sun"
+}

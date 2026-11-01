@@ -1,0 +1,31 @@
+{
+  "name": "cartoon-clean",
+  "description": "Bold-outline friendly cartoon, flat colours, uncluttered (proposals and explainers)",
+  "category": "cartoon",
+  "tags": [
+    "cartoon",
+    "outline",
+    "character",
+    "friendly",
+    "explainer",
+    "proposal",
+    "commercial",
+    "mascot",
+    "vector",
+    "people"
+  ],
+  "use_cases": [
+    "commercial proposal",
+    "explainer",
+    "training material",
+    "customer guide"
+  ],
+  "look": "clean cartoon illustration with bold outlines and flat colours",
+  "template": "A clean cartoon illustration of {subject}. Bold even black outlines, flat bright colours with simple cel shading, friendly rounded characters with expressive faces, simple uncluttered background, consistent line weight, vector-like finish, suitable for a commercial proposal or explainer.",
+  "negative": "photo, realistic, 3d render, noisy texture, text, letters, watermark, sketchy lines",
+  "params": {
+    "steps": 24,
+    "guidance": 4
+  },
+  "thumb_subject": "a smiling consultant presenting a growth chart to a client"
+}

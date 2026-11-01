@@ -1,0 +1,30 @@
+{
+  "name": "cartoon-comic",
+  "description": "Comic-book ink and halftone, dynamic composition, no text",
+  "category": "cartoon",
+  "tags": [
+    "comic",
+    "halftone",
+    "ink",
+    "bd",
+    "graphic",
+    "novel",
+    "dynamic",
+    "story",
+    "cartoon"
+  ],
+  "use_cases": [
+    "storytelling",
+    "internal communication",
+    "training scenario",
+    "case-study story"
+  ],
+  "look": "comic book illustration with ink outlines and halftone shading",
+  "template": "A comic book style illustration of {subject}. Confident black ink outlines with varied line weight, flat colours with halftone dot shading, dynamic composition, slightly textured paper, bold limited palette, graphic novel panel quality, no speech bubbles, no text.",
+  "negative": "photo, realistic, 3d render, text, letters, speech bubble, watermark",
+  "params": {
+    "steps": 24,
+    "guidance": 4
+  },
+  "thumb_subject": "an engineer repairing a large machine while sparks fly"
+}

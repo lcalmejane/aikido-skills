@@ -1,0 +1,32 @@
+{
+  "name": "gradient-abstract",
+  "description": "Modern abstract gradients and glass panels with space for a title (keynote backgrounds)",
+  "category": "vector",
+  "tags": [
+    "abstract",
+    "gradient",
+    "background",
+    "keynote",
+    "saas",
+    "tech",
+    "header",
+    "cover",
+    "modern",
+    "glass",
+    "vector"
+  ],
+  "use_cases": [
+    "title slide",
+    "website hero background",
+    "report cover",
+    "event banner"
+  ],
+  "look": "modern abstract vector illustration with mesh gradients and glass panels",
+  "template": "A modern abstract vector illustration of {subject}. Smooth mesh gradients in deep blue, violet and cyan, flowing geometric shapes and soft glassmorphism panels, subtle grain, clean layered composition with calm empty space on one side for a title, premium SaaS keynote background.",
+  "negative": "photo, realistic, 3d render, noisy texture, text, letters, numbers, watermark, cluttered, blurry",
+  "params": {
+    "steps": 24,
+    "guidance": 4
+  },
+  "thumb_subject": "digital transformation and data flow"
+}

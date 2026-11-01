@@ -1,0 +1,26 @@
+{
+  "name": "neon-cyberpunk",
+  "description": "Night city, neon glow, wet reflections",
+  "category": "stylized",
+  "tags": [
+    "neon",
+    "cyberpunk",
+    "scifi",
+    "night",
+    "tech",
+    "dark"
+  ],
+  "use_cases": [
+    "tech event",
+    "gaming",
+    "sci-fi cover"
+  ],
+  "look": "cyberpunk night scene with magenta and cyan neon",
+  "template": "A cyberpunk night scene of {subject}. Glowing magenta and cyan neon lights, rain-soaked reflective surfaces, dense atmospheric haze, high contrast, futuristic architecture, cinematic composition.",
+  "negative": "daylight, pastel, flat colours, text, readable signs, watermark, low contrast, blurry",
+  "params": {
+    "steps": 24,
+    "guidance": 4
+  },
+  "thumb_subject": "a lone lighthouse on a cliff at dawn, waves crashing below"
+}

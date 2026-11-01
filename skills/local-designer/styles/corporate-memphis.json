@@ -1,0 +1,33 @@
+{
+  "name": "corporate-memphis",
+  "description": "Flat figures with long limbs and small heads, solid bright colours (tech-company style)",
+  "category": "vector",
+  "tags": [
+    "corporate",
+    "memphis",
+    "flat",
+    "people",
+    "team",
+    "tech",
+    "saas",
+    "friendly",
+    "presentation",
+    "onboarding",
+    "vector"
+  ],
+  "use_cases": [
+    "SaaS landing page",
+    "onboarding",
+    "HR deck",
+    "slide illustration"
+  ],
+  "look": "corporate Memphis flat illustration with small-headed figures and elongated limbs",
+  "template": "A corporate Memphis flat illustration of {subject}. Characters with small heads, elongated elastic limbs and simplified faces, bold solid colours with purple, blue and coral skin tones, simple geometric plants and shapes as decoration, no outlines, no gradients, no shadows, plain pale background, friendly modern tech-company style.",
+  "negative": "photo, realistic, 3d, outlines, shading, detailed faces, text, letters, watermark",
+  "params": {
+    "steps": 24,
+    "guidance": 4
+  },
+  "thumb_subject": "two colleagues planning a project in front of a giant whiteboard",
+  "notes": "Widely used since 2017 and sometimes criticised as generic: pair it with a distinctive palette."
+}

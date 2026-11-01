@@ -1,0 +1,27 @@
+{
+  "name": "flat-vector",
+  "description": "Clean flat vector illustration, limited palette, geometric shapes",
+  "category": "vector",
+  "tags": [
+    "flat",
+    "vector",
+    "geometric",
+    "minimal",
+    "modern",
+    "editorial"
+  ],
+  "use_cases": [
+    "blog",
+    "slide",
+    "web illustration",
+    "icon set"
+  ],
+  "look": "flat vector illustration with geometric shapes and a limited palette",
+  "template": "A flat vector illustration of {subject}. Clean geometric shapes, limited harmonious colour palette, subtle gradients, crisp edges, consistent stroke weight, minimalist, modern editorial illustration, plain background.",
+  "negative": "photo, realistic, 3d render, noisy texture, text, letters, watermark, cluttered",
+  "params": {
+    "steps": 24,
+    "guidance": 4
+  },
+  "thumb_subject": "a lone lighthouse on a cliff at dawn, waves crashing below"
+}

@@ -9,7 +9,7 @@ repositories from which compatible skills can be imported.
 |---|---|---|
 | `jira` | integration | Bidirectional JIRA Cloud sync, Agile KPIs, HTML reports |
 | `confluence` | integration | Bidirectional Markdown <-> Confluence Cloud sync |
-| `drawthing` | generation | Local image generation with the Draw Things macOS app (HTTP API), AI-KIDO website style |
+| `local-designer` | generation | Local image design: art-director agent, client brief and mood board with validation lock before generation, 29 illustrated render styles, style recommendation (brief, image, project), sweeps, parameter knowledge base. Connector: Draw Things (ComfyUI planned) |
 | `aikido-skill-example` | example | Minimal skeleton to copy |
 
 ## Layout

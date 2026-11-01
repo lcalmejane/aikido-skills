@@ -1,0 +1,29 @@
+{
+  "name": "corporate-architecture",
+  "description": "Modern glass building at blue hour, corrected verticals, brochure quality",
+  "category": "photo",
+  "tags": [
+    "architecture",
+    "building",
+    "realestate",
+    "headquarters",
+    "city",
+    "campus",
+    "corporate",
+    "exterior"
+  ],
+  "use_cases": [
+    "headquarters presentation",
+    "real-estate brochure",
+    "annual report cover",
+    "site page"
+  ],
+  "look": "architectural photograph of a modern glass building at blue hour",
+  "template": "A professional architectural photograph of {subject}. Modern glass and steel building at blue hour, clean converging lines corrected to vertical, wide-angle lens, crisp reflections in the facade, deep blue sky with warm lit interiors, minimal people, high-end corporate brochure quality.",
+  "negative": "cartoon, illustration, painting, text, letters, logo, watermark, distorted anatomy, extra fingers, oversaturated, harsh flash",
+  "params": {
+    "steps": 24,
+    "guidance": 4
+  },
+  "thumb_subject": "a modern glass office tower beside a small plaza"
+}

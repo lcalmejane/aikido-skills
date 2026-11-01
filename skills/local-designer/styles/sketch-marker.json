@@ -1,0 +1,30 @@
+{
+  "name": "sketch-marker",
+  "description": "Concept sketch with fine liner and grey markers, one accent colour",
+  "category": "drawing",
+  "tags": [
+    "sketch",
+    "marker",
+    "concept",
+    "design",
+    "product",
+    "ideation",
+    "wireframe",
+    "industrial",
+    "drawing"
+  ],
+  "use_cases": [
+    "concept proposal",
+    "early design",
+    "workshop board",
+    "product ideation"
+  ],
+  "look": "concept sketch drawn with fine liner and grey design markers",
+  "template": "A concept sketch of {subject} drawn with fine liner and grey design markers. Loose confident lines, quick hatching, soft grey marker shading with a single accent colour, white paper, product-design sketchbook look, visible construction lines, no text.",
+  "negative": "photo, 3d render, text, letters, watermark, full colour, digital gradient",
+  "params": {
+    "steps": 24,
+    "guidance": 4
+  },
+  "thumb_subject": "a generic modern desk lamp with an adjustable arm"
+}

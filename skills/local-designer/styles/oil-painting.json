@@ -1,0 +1,25 @@
+{
+  "name": "oil-painting",
+  "description": "Classical oil painting, visible brushwork, rich chiaroscuro",
+  "category": "painting",
+  "tags": [
+    "oil",
+    "classic",
+    "painting",
+    "warm",
+    "dramatic"
+  ],
+  "use_cases": [
+    "portrait",
+    "landscape",
+    "premium decor"
+  ],
+  "look": "oil painting with visible brushwork and chiaroscuro",
+  "template": "An oil painting of {subject}. Visible impasto brushwork, rich warm palette, dramatic chiaroscuro, canvas texture, old-master composition, subtle craquelure, museum quality.",
+  "negative": "photo, digital art, 3d render, flat vector, text, watermark, signature, oversaturated",
+  "params": {
+    "steps": 24,
+    "guidance": 4
+  },
+  "thumb_subject": "a lone lighthouse on a cliff at dawn, waves crashing below"
+}

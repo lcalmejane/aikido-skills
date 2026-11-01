@@ -1,0 +1,32 @@
+{
+  "name": "doodle-whiteboard",
+  "description": "Hand-drawn whiteboard sketchnote, stick figures, arrows, marker accents",
+  "category": "drawing",
+  "tags": [
+    "doodle",
+    "whiteboard",
+    "sketchnote",
+    "hand",
+    "drawn",
+    "workshop",
+    "informal",
+    "process",
+    "agile",
+    "journey"
+  ],
+  "use_cases": [
+    "workshop",
+    "retrospective",
+    "training",
+    "pitch warm-up"
+  ],
+  "look": "hand-drawn whiteboard doodle sketchnote",
+  "template": "A hand-drawn whiteboard doodle sketchnote of {subject}. Simple marker drawings with wobbly imperfect lines, stick figures, arrows and boxes, black marker with blue and red accents, white board background, playful and informal, uncluttered, no readable text.",
+  "negative": "photo, realistic, 3d render, text, words, letters, numbers, handwriting, captions, labels, title, watermark, perfect geometry",
+  "params": {
+    "steps": 24,
+    "guidance": 4
+  },
+  "thumb_subject": "a stick figure walking along a winding path toward a small shop",
+  "notes": "Models tend to write titles and labels on whiteboards (often misspelt). Describe the picture, never the words: avoid subjects such as \"journey\", \"steps\", \"process\" that invite captions, and add real labels in the slide tool."
+}

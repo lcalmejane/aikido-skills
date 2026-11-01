@@ -16,11 +16,11 @@
       "path": "skills/jira"
     },
     {
-      "name": "drawthing",
-      "description": "Generate images locally with the Draw Things macOS app through its HTTP API (txt2img, prompt reuse from an existing image, WebP export) in the AI-KIDO website style.",
-      "version": "1.0.0",
+      "name": "local-designer",
+      "description": "Local image design for agents: art-director agent, structured client brief and mood board with a validation lock before generation, a design charter kept in the Memory Bank (/init-design) with palette audit, 29 illustrated render styles, style recommendation from a brief, an image or a project, sweeps kept outside git, parameter knowledge base. Generation through a connector: Draw Things over HTTP or gRPC (server's real model list, TLS with fingerprint, local or remote server), ComfyUI planned.",
+      "version": "4.3.0",
       "category": "generation",
-      "path": "skills/drawthing"
+      "path": "skills/local-designer"
     },
     {
       "name": "confluence",

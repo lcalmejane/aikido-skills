@@ -1,0 +1,26 @@
+{
+  "name": "photo-realistic",
+  "description": "Natural photograph, soft daylight, shallow depth of field",
+  "category": "photo",
+  "tags": [
+    "photo",
+    "realistic",
+    "nature",
+    "landscape",
+    "product",
+    "portrait"
+  ],
+  "use_cases": [
+    "hero image",
+    "editorial photo",
+    "product shot"
+  ],
+  "look": "natural photograph, shallow depth of field",
+  "template": "A high quality photograph of {subject}. Natural soft light, realistic textures, shallow depth of field, 50mm lens, sharp focus on the subject, natural colours, professional photography.",
+  "negative": "illustration, drawing, cartoon, 3d render, painting, text, watermark, oversaturated, blurry, deformed",
+  "params": {
+    "steps": 24,
+    "guidance": 4
+  },
+  "thumb_subject": "a lone lighthouse on a cliff at dawn, waves crashing below"
+}

@@ -1,0 +1,30 @@
+{
+  "name": "isometric-line",
+  "description": "Isometric technical line art, thin blue outlines, one accent fill",
+  "category": "technical",
+  "tags": [
+    "isometric",
+    "line",
+    "technical",
+    "architecture",
+    "plan",
+    "infrastructure",
+    "building",
+    "schema",
+    "drawing"
+  ],
+  "use_cases": [
+    "infrastructure schema",
+    "floor plan",
+    "site layout",
+    "process hall"
+  ],
+  "look": "isometric technical line illustration with thin outlines and one accent colour",
+  "template": "An isometric technical line illustration of {subject}. Thin precise dark-blue outlines on a white background, 30-degree isometric projection, selected parts filled with a single flat accent colour, clean architectural-drawing quality, no shading gradients, no text.",
+  "negative": "photo, realistic, text, letters, numbers, watermark, blurry, messy, heavy shading",
+  "params": {
+    "steps": 24,
+    "guidance": 4
+  },
+  "thumb_subject": "a data centre room with rows of server racks"
+}
