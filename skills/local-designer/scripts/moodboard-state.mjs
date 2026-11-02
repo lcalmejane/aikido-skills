@@ -1,5 +1,6 @@
 // Mood board state on disk: brief.json, board.json, decision.json, moodboard.html, trials/.
-// The folder lives outside git (a client brief and its trials are not project source).
+// The folder lives in the project's design target (<design dir>/moodboards/<name>/), or in ~/local-designer-lab when no target is set.
+// No absolute path is written in these files: they are versioned with the project.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 
@@ -23,12 +24,22 @@ export function insideGit(path) {
 }
 
 export const boardPath = (dir, key) => join(resolve(dir), FILES[key]);
-export const trialPath = (dir, id) => join(resolve(dir), 'trials', `${id}.png`);
+// One render per direction and per scene: trials/A-hero.png (webp next to it). Without a scene: the single legacy trial trials/A.png.
+export const trialPath = (dir, id, scene) => join(resolve(dir), 'trials', scene ? `${id}-${scene}.png` : `${id}.png`);
+// The file to show: the webp when present (light, versioned with the project), else the png.
+export function trialImage(dir, id, scene) {
+  const png = trialPath(dir, id, scene);
+  const webp = png.replace(/\.png$/, '.webp');
+  return existsSync(webp) ? webp : existsSync(png) ? png : null;
+}
+
+// The thumbnail path is machine specific (absolute): it is not stored. The page rebuilds it from the style name.
+export const withoutThumbnails = (board) => ({ ...board, tracks: board.tracks.map(({ thumbnail, ...track }) => track) });
 
 export function saveBoard(dir, { brief, board, html }) {
   const d = resolve(dir);
   writeJson(boardPath(d, 'brief'), brief);
-  writeJson(boardPath(d, 'board'), board);
+  writeJson(boardPath(d, 'board'), withoutThumbnails(board));
   if (!existsSync(boardPath(d, 'decision'))) {
     writeJson(boardPath(d, 'decision'), { validated: null, validated_by: null, validated_at: null,
       tracks: Object.fromEntries(board.tracks.map((t) => [t.id, { state: 'proposed', comments: [] }])), history: [] });
@@ -67,7 +78,7 @@ export function decide(dir, { track, state, comment, by = 'unknown', now = new D
 export function validatedTrack(dir) {
   const { brief, board, decision } = loadBoard(dir);
   if (!decision.validated || decision.tracks?.[decision.validated]?.state !== 'validated') {
-    throw new Error(`No validated direction in ${resolve(dir)}. Show moodboard.html to the client, then record the choice: moodboard decide ${dir} --track A --state validated --by "<who>".`);
+    throw new Error(`No validated direction in ${resolve(dir)}. Show moodboard.html to the client (preview order in references/preview.md), then record the choice: moodboard decide ${dir} --track A --state validated --by "<who>".`);
   }
   const track = board.tracks.find((t) => t.id === decision.validated);
   if (!track) throw new Error(`Validated direction ${decision.validated} is missing from board.json: rebuild the mood board.`);
@@ -76,8 +87,14 @@ export function validatedTrack(dir) {
 
 export function summary(dir) {
   const { brief, board, decision } = loadBoard(dir);
+  const scenes = board.scenes ?? [];
   return {
     dir: resolve(dir), client: brief.client, project: brief.project, validated: decision.validated,
-    tracks: board.tracks.map((t) => ({ id: t.id, style: t.style, state: decision.tracks?.[t.id]?.state ?? 'proposed', comments: decision.tracks?.[t.id]?.comments?.length ?? 0, trial: existsSync(trialPath(dir, t.id)) })),
+    scenes: scenes.map((s) => s.id),
+    tracks: board.tracks.map((t) => ({
+      id: t.id, style: t.style, state: decision.tracks?.[t.id]?.state ?? 'proposed', comments: decision.tracks?.[t.id]?.comments?.length ?? 0,
+      trial: Boolean(trialImage(dir, t.id)),
+      renders: scenes.filter((s) => trialImage(dir, t.id, s.id)).length, expected: scenes.length,
+    })),
   };
 }

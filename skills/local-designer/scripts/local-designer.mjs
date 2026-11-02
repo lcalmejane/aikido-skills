@@ -2,7 +2,7 @@
 // local-designer: art direction tools plus a connector-based image generation CLI.
 // Zero dependency, Node >= 18.
 // The image engine is a connector (scripts/connectors/): Draw Things today, others can be registered.
-// Commands: status | generate | inspect | styles | sweep | recommend | analyze | match | project-scan | brief | moodboard | charter | connectors | migrate
+// Commands: status | generate | inspect | styles | sweep | recommend | analyze | match | project-scan | brief | moodboard | charter | character | vision | connectors | migrate
 import { existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
@@ -14,14 +14,19 @@ import {
 } from './styles-lib.mjs';
 
 import { analyzeImage, draftStyleFromImage, matchImage, scanProject } from './design-tools.mjs';
-import { BRIEF_TEMPLATE, buildMoodboard, validateBrief } from './moodboard-lib.mjs';
+import { BRIEF_TEMPLATE, buildMoodboard, scenesOf, validateBrief } from './moodboard-lib.mjs';
 import { renderMoodboardHtml } from './moodboard-html.mjs';
-import { boardPath, decide, loadBoard, saveBoard, summary, trialPath, validatedTrack } from './moodboard-state.mjs';
+import { boardPath, decide, loadBoard, saveBoard, summary, trialImage, trialPath, validatedTrack } from './moodboard-state.mjs';
 import { DEFAULT_CONNECTOR, listConnectors, resolveConnector } from './connectors/index.mjs';
 import {
   DEFAULT_URL, assertSize, buildPayload, decodeEntities, extractPngMetadata, httpJson, isLocalUrl, parseLora, parseSetting,
 } from './connectors/drawthing.mjs';
-import { pngSize } from './png.mjs';
+import { pngSize, decodePng } from './png.mjs';
+import { auditImage, auditZones, gridOverlay, measureLandmarks, planToPng, renderPlan, validateSpec } from './character-lib.mjs';
+import { designMoodboardsDir, isInside, resolveDesignDir } from './design-target.mjs';
+import {
+  DEFAULT_CHECKS, askVision, checksFromBrief, listVisionModels, loadVisionConfig, pinVision, reviewPrompt, summariseReview, visionStatus,
+} from './vision-lib.mjs';
 import { applyMigration, planMigration } from './migrate.mjs';
 import {
   auditColours, buildCharter, charterFile, findProjectRoot, loadCharter, outOfSync, registerInIndexes, saveCharter, touch, validateCharter, withStyle,
@@ -285,7 +290,7 @@ export async function generateFromCharter(opts) {
   const { charter } = loadCharter(file);
   const { errors } = validateCharter(charter, loadStyles());
   if (charter.status !== 'active' || errors.length) {
-    throw new Error(`The design charter ${file} is not active${errors.length ? ` (${errors.join('; ')})` : ''}. Validate a mood board direction (/design-moodboard) then run: charter init --moodboard <dir>, or: charter activate --style NAME --by "<who>".`);
+    throw new Error(`The design charter ${file} is not active${errors.length ? ` (${errors.join('; ')})` : ''}. Validate a mood board direction (/aikido-design-moodboard) then run: charter init --moodboard <dir>, or: charter activate --style NAME --by "<who>".`);
   }
   const subject = optStr(opts, 'prompt');
   if (!subject && !opts['prompt-file'] && !opts.from) throw new Error('--prompt "<subject>" is required with --charter (the charter holds the look, not the subject).');
@@ -437,7 +442,7 @@ async function cmdStyles(opts) {
   return { status: problems.length ? 'error' : 'ok', count: Object.keys(styles).length, problems, without_thumbnail: withoutThumb };
 }
 
-// Design charter stored in the Memory Bank (prompts/gen/concepts/design/design-charter.md). See /init-design.
+// Design charter stored in the Memory Bank (prompts/gen/concepts/design/design-charter.md). See /aikido-init-design.
 function cmdCharter(opts) {
   const [sub, arg] = opts._;
   const root = optStr(opts, 'root');
@@ -470,8 +475,12 @@ function cmdCharter(opts) {
     const scanDir = opts.scan ? (opts.scan === true ? (root ?? findProjectRoot() ?? '.') : String(opts.scan)) : null;
     const scan = scanDir ? scanProject(scanDir, styles, { limit: 5 }) : null;
     if (!briefFile && !track && !scan) throw new Error('Nothing to build the charter from: pass --moodboard <validated dir>, --brief <brief.json> and/or --scan [dir].');
-    // <root>/prompts/gen/concepts/design/design-charter.md: the project name is five levels up.
-    const fallbackName = file && !optStr(opts, 'dir') ? basename(resolve(file, '..', '..', '..', '..', '..')) : 'project';
+    // Design target (<project>/design/design-charter.md): the project is the parent of the design folder.
+    // Legacy layout (<root>/prompts/gen/concepts/design/design-charter.md): five levels up.
+    const target = resolveDesignDir();
+    const fallbackName = !file || optStr(opts, 'dir') ? 'project'
+      : target && resolve(dirname(file)) === target ? basename(dirname(target))
+        : basename(resolve(file, '..', '..', '..', '..', '..'));
     const charter = buildCharter({ brief, track, scan, fallbackName, by: moodboardBy ?? by, validatedAt: moodboardAt, moodboard: opts.moodboard && opts.moodboard !== true ? opts.moodboard : null, briefFile: Boolean(briefFile) });
     if (previous) { charter.revision = previous.revision + 1; charter.decisions = [...previous.decisions, ...charter.decisions]; }
     const { errors, warnings } = validateCharter(charter, styles);
@@ -530,6 +539,99 @@ function cmdCharter(opts) {
     return { status: 'ok', charter: { file, state: charter.status, project: charter.project }, summary: { images: images.length, on_brand: count('on-brand'), partial: count('partial'), off_brand: count('off-brand'), unreadable: count('unreadable') }, images };
   }
   throw new Error('Usage: charter init|show|check|render|activate|note|audit ...');
+}
+
+// Character model sheet: a spec in head units drives a flat plan (img2img start) and the off-model audit.
+function cmdCharacter(opts) {
+  const [sub, a, b] = opts._;
+  const readJson = (file, what) => {
+    if (!file) throw new Error(`Usage: character ${sub} <${what}>`);
+    return JSON.parse(readFileSync(resolve(file), 'utf8'));
+  };
+  const writeOut = (file, buf) => { mkdirSync(dirname(resolve(file)), { recursive: true }); writeFileSync(resolve(file), buf); return resolve(file); };
+  const view = optStr(opts, 'view') ?? 'front';
+  if (sub === 'check') {
+    const spec = readJson(a, 'spec.json');
+    const verdict = validateSpec(spec);
+    return { status: verdict.errors.length ? 'invalid' : 'ok', ...verdict, parts: spec.parts?.length ?? 0, height: spec.height };
+  }
+  if (sub === 'grid') {
+    if (!a) throw new Error('Usage: character grid <image.png> [--step 32] [--out grid.png]');
+    const out = optStr(opts, 'out') ?? a.replace(/\.png$/i, '') + '-grid.png';
+    return { status: 'ok', out: writeOut(out, gridOverlay(readFileSync(resolve(a)), { step: Number(opts.step ?? 32) })) };
+  }
+  if (sub === 'measure') {
+    return { status: 'ok', ...measureLandmarks(readJson(a, 'landmarks.json')) };
+  }
+  if (sub === 'plan') {
+    const spec = readJson(a, 'spec.json');
+    const out = optStr(opts, 'out');
+    if (!out) throw new Error('Usage: character plan <spec.json> --out plan.png [--view front|back] [--lines] [--guides] [--size 512]');
+    const size = opts.size ? { width: Number(opts.size), height: Number(opts.size) } : undefined;
+    const img = renderPlan(spec, { view, size, lines: opts.lines === true, guides: opts.guides === true });
+    return { status: 'ok', ...validateSpec(spec), out: writeOut(out, planToPng(img, { Description: `plan ${spec.name} ${view}` })), width: img.width, height: img.height };
+  }
+  if (sub === 'audit') {
+    if (!a || !b) throw new Error('Usage: character audit <spec.json> <image.png> [--view front] [--tolerance 0.15] [--threshold 38] [--rows]');
+    const spec = readJson(a, 'spec.json');
+    const img = decodePng(readFileSync(resolve(b)));
+    const o = { view, tolerance: opts.tolerance ? Number(opts.tolerance) : undefined, threshold: opts.threshold ? Number(opts.threshold) : undefined };
+    const clean = Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined));
+    const zones = auditZones(img, spec, clean);
+    const result = { status: 'ok', image: b, view, ...zones };
+    if (opts.rows === true) result.rows = auditImage(img, spec, clean).rows;
+    return result;
+  }
+  throw new Error('Usage: character check|grid|measure|plan|audit ...');
+}
+
+// Vision: every image judgement goes through ONE pinned vision-language model (see references/vision.md).
+async function cmdVision(opts) {
+  const [sub, ...rest] = opts._;
+  const allowRemote = opts['allow-remote'] === true;
+  const cfg = loadVisionConfig();
+  if (optStr(opts, 'url')) cfg.url = optStr(opts, 'url').replace(/\/+$/, '');
+  if (sub === 'status') return { status: 'ok', ...(await visionStatus(cfg, { allowRemote })) };
+  if (sub === 'models') {
+    const models = await listVisionModels(cfg, { allowRemote });
+    return { status: 'ok', url: cfg.url, pinned: cfg.model ?? null, models,
+      note: 'Pick one that reads images (type "vlm" on LM Studio; on other servers, check the model card), then: vision pin --model <id>' };
+  }
+  if (sub === 'pin') {
+    const model = optStr(opts, 'model');
+    const models = await listVisionModels(cfg, { allowRemote });
+    const found = models.find((m) => m.id === model);
+    if (model && !found) throw new Error(`"${model}" is not on ${cfg.url}. Available: ${models.map((m) => m.id).join(', ')}`);
+    if (found?.type === 'llm' && opts.force !== true) throw new Error(`"${model}" is a text-only model on this server. Pick a vlm, or pass --force if you know it reads images.`);
+    return { status: 'ok', ...pinVision({ model, url: cfg.url }), note: 'Commit .local-designer.json so the whole project uses the same model.' };
+  }
+  const images = rest;
+  if (sub === 'ask') {
+    const prompt = optStr(opts, 'prompt') ?? (optStr(opts, 'prompt-file') ? readFileSync(resolve(optStr(opts, 'prompt-file')), 'utf8') : undefined);
+    return askVision(cfg, { images, prompt, allowRemote, maxTokens: opts['max-tokens'] ? Number(opts['max-tokens']) : undefined,
+      timeout: opts.timeout ? Number(opts.timeout) : undefined, seed: opts.seed ? Number(opts.seed) : undefined, maxSide: opts['max-side'] ? Number(opts['max-side']) : undefined });
+  }
+  if (sub === 'review') {
+    let checks = DEFAULT_CHECKS;
+    let context = optStr(opts, 'context');
+    if (optStr(opts, 'brief')) {
+      const brief = JSON.parse(readFileSync(resolve(optStr(opts, 'brief')), 'utf8'));
+      checks = [...checksFromBrief(brief), ...DEFAULT_CHECKS];
+      context ??= brief.project ? `images for the project ${brief.project}` : undefined;
+    }
+    if (optStr(opts, 'checks')) checks = optStr(opts, 'checks').split(';').map((s) => s.trim()).filter(Boolean);
+    if (!checks.length) throw new Error('vision review: no check to answer');
+    const results = [];
+    for (const image of images) {
+      const asked = await askVision(cfg, { images: [image], prompt: reviewPrompt(checks, { context }), allowRemote,
+        maxTokens: opts['max-tokens'] ? Number(opts['max-tokens']) : undefined, timeout: opts.timeout ? Number(opts.timeout) : undefined, maxSide: opts['max-side'] ? Number(opts['max-side']) : undefined });
+      results.push({ image, seconds: asked.seconds, ...summariseReview(checks, asked.answer) });
+    }
+    const count = (v) => results.filter((r) => r.verdict === v).length;
+    return { status: 'ok', model: cfg.model, source: cfg.source, url: cfg.url, summary: { images: results.length, ok: count('ok'), to_check: count('to-check'), fail: count('fail'), unparsed: count('unparsed') }, results,
+      note: 'A pass is the model\'s reading, not a proof: look at every image that is not "ok", and at the hands and text of the others.' };
+  }
+  throw new Error('Usage: vision status|models|pin|ask|review ...');
 }
 
 function cmdAnalyze(opts) {
@@ -639,32 +741,50 @@ function cmdBrief(opts) {
 // Rebuilds moodboard.html from the files on disk (trial renders found in trials/ are embedded).
 function rebuildMoodboardHtml(dir) {
   const { brief, board, decision } = loadBoard(dir);
+  const scenes = board.scenes ?? [];
   const images = {};
-  for (const t of board.tracks) if (existsSync(trialPath(dir, t.id))) images[t.id] = trialPath(dir, t.id);
+  for (const t of board.tracks) {
+    const perScene = Object.fromEntries(scenes.map((s) => [s.id, trialImage(dir, t.id, s.id)]).filter(([, f]) => f));
+    if (Object.keys(perScene).length) images[t.id] = perScene;
+    else if (trialImage(dir, t.id)) images[t.id] = trialImage(dir, t.id); // former mood board: one trial per direction
+  }
+  // The thumbnail is found again from the style name (board.json keeps no absolute path).
+  const styles = loadStyles();
+  const tracks = board.tracks.map((t) => ({ ...t, thumbnail: t.thumbnail ?? (styles[t.style] ? thumbFile(styles[t.style]) : null) }));
   const file = boardPath(dir, 'html');
-  writeFileSync(file, renderMoodboardHtml({ brief, tracks: board.tracks }, decision, images));
+  writeFileSync(file, renderMoodboardHtml({ brief, scenes, tracks }, decision, images));
   return file;
 }
 
+// One small render per direction AND per scene (the situations), converted to webp so the folder stays light enough to be versioned.
 async function runTrials(dir, opts) {
   const { brief, board } = loadBoard(dir);
-  if (!brief.subject) throw new Error('The brief has no "subject": trials need one.');
-  const only = optStr(opts, 'track')?.split(',').map((s) => s.trim().toUpperCase()).filter(Boolean);
+  const scenes = board.scenes?.length ? board.scenes : scenesOf(brief);
+  if (!scenes.length) throw new Error('The brief has no "subject" and no "scenes": trials need one.');
+  const upper = (key) => optStr(opts, key)?.split(',').map((s) => s.trim().toUpperCase()).filter(Boolean);
+  const onlyTracks = upper('track');
+  const onlyScenes = optStr(opts, 'scene')?.split(',').map((s) => s.trim()).filter(Boolean);
   const ctx = await openSession(opts);
-  const size = sizeFromRatio(brief.format?.ratio ?? '4:3', Number(opts.size ?? 512));
+  const long = Number(opts.size ?? 640);
   const trials = [];
   for (const t of board.tracks) {
-    if (only && !only.includes(t.id)) continue;
-    const out = trialPath(dir, t.id);
-    if (opts.resume && existsSync(out)) { trials.push({ track: t.id, file: out, reused: true }); continue; }
-    process.stderr.write(`[trial ${t.id}] ${t.style}\n`);
-    try {
-      await generateOne(ctx, { prompt: brief.subject, style: t.style, negative: t.negative || undefined, out, width: size.width, height: size.height, steps: opts.steps ?? 8, seed: opts.seed ?? 42,
-        sidecar: true, timeout: opts.timeout, model: opts.model });
-      trials.push({ track: t.id, file: out });
-    } catch (error) {
-      trials.push({ track: t.id, error: error.message });
-      process.stderr.write(`  failed: ${error.message}\n`);
+    if (onlyTracks && !onlyTracks.includes(t.id)) continue;
+    for (const scene of scenes) {
+      if (onlyScenes && !onlyScenes.includes(scene.id)) continue;
+      const out = trialPath(dir, t.id, scene.id);
+      const done = trialImage(dir, t.id, scene.id);
+      if (opts.resume && done) { trials.push({ track: t.id, scene: scene.id, file: done, reused: true }); continue; }
+      const size = sizeFromRatio(scene.ratio ?? brief.format?.ratio ?? '4:3', long);
+      process.stderr.write(`[trial ${t.id}/${scene.id}] ${t.style}\n`);
+      try {
+        const r = await generateOne(ctx, { prompt: scene.subject, style: t.style, negative: t.negative || undefined, out, width: size.width, height: size.height, steps: opts.steps ?? 8, seed: opts.seed ?? 42,
+          sidecar: true, webp: true, quality: opts.quality ?? 80, timeout: opts.timeout, model: opts.model });
+        if (r.webp) rmSync(out, { force: true }); // keep the png only when the conversion failed
+        trials.push({ track: t.id, scene: scene.id, file: r.webp ?? out });
+      } catch (error) {
+        trials.push({ track: t.id, scene: scene.id, error: error.message });
+        process.stderr.write(`  failed: ${error.message}\n`);
+      }
     }
   }
   return { trials, html: rebuildMoodboardHtml(dir) };
@@ -682,8 +802,13 @@ async function cmdMoodboard(opts) {
     const brief = readJsonFile(briefFile, 'brief');
     const errors = validateBrief(brief);
     if (errors.length) throw new Error(`Invalid brief: ${errors.join('; ')}`);
-    const dir = resolve(optStr(opts, 'out-dir') ?? join(DEFAULT_LAB_DIR, `${new Date().toISOString().slice(0, 10)}-moodboard-${slug(brief.project ?? brief.client)}`));
-    if (insideGitRepo(dir) && !opts['allow-in-repo']) throw new Error(`--out-dir ${dir} is inside a git repository: a client mood board stays outside git (default ${DEFAULT_LAB_DIR}).`);
+    const target = resolveDesignDir();
+    const name = target ? `${new Date().toISOString().slice(0, 10)}-${slug(brief.project ?? brief.client)}` : `${new Date().toISOString().slice(0, 10)}-moodboard-${slug(brief.project ?? brief.client)}`;
+    const dir = resolve(optStr(opts, 'out-dir') ?? join(target ? designMoodboardsDir(target) : DEFAULT_LAB_DIR, name));
+    // Inside the design target a mood board is project material (kept with the charter); anywhere else in git it stays refused.
+    if (insideGitRepo(dir) && !isInside(dir, target) && !opts['allow-in-repo']) {
+      throw new Error(`--out-dir ${dir} is inside a git repository but outside the design target${target ? ` (${target})` : ' (none configured: --design-dir, LOCAL_DESIGNER_DESIGN_DIR or .local-designer.json)'}. Use a folder inside the target, or ${DEFAULT_LAB_DIR}.`);
+    }
     if (existsSync(boardPath(dir, 'decision')) && !opts.force) throw new Error(`${dir} already holds a mood board with decisions. Use another --out-dir, or --force to start over.`);
     const only = optStr(opts, 'styles')?.split(',').map((s) => s.trim()).filter(Boolean) ?? [];
     const board = buildMoodboard(loadStyles(), brief, { count: Number(opts.count ?? 3), only });
@@ -691,7 +816,7 @@ async function cmdMoodboard(opts) {
     saveBoard(dir, { brief, board });
     const html = rebuildMoodboardHtml(dir);
     const result = { status: 'ok', dir, html, tracks: board.tracks.map((t) => ({ id: t.id, style: t.style, thumbnail: t.thumbnail })), warnings: board.warnings,
-      next: 'Show moodboard.html to the client, then record the answer with: moodboard decide <dir> --track A --state validated --by "<who>"' };
+      next: 'Show moodboard.html to the client (preview order: agent CLI/LLM host, then IDE built-in browser, then external browser: references/preview.md), then record the answer with: moodboard decide <dir> --track A --state validated --by "<who>"' };
     if (opts.trial) Object.assign(result, await runTrials(dir, opts));
     return result;
   }
@@ -732,7 +857,8 @@ const USAGE = `Usage: local-designer.mjs <command> [options]
   moodboard build --brief f.json [--out-dir D] [--styles a,b,c] [--count 3] [--trial] [--force]
                                  Build the client mood board (moodboard.html, board.json, decision.json) outside git
   moodboard decide D --track A [--state selected|rejected|validated] [--comment "..."] [--by "who"]
-  moodboard trial D [--track A,B] [--size 512] [--steps 8] [--resume]   Small trial renders of the real subject
+  moodboard trial D [--track A,B] [--scene hero,detail] [--size 640] [--steps 8] [--resume]
+                                   One small render per direction and per scene (situation), saved as webp
   moodboard status D | html D    Show the state of each direction | rebuild the HTML page
   generate --moodboard D ...     Lock: refuses to run until a direction is validated; uses its style and the brief subject
   charter init [--moodboard D] [--brief f.json] [--scan [dir]] [--by who] [--force] [--dry-run] [--root P]
@@ -741,6 +867,18 @@ const USAGE = `Usage: local-designer.mjs <command> [options]
   charter activate --style NAME --by who [--note "..."]   Validate the style: the charter becomes active
   charter note "text" --by who   Add a decision to the log
   charter audit <image|folder>...  Compare the dominant colours of images with the charter palette (verdict per image + summary)
+  character check <spec.json>      Validate a character model sheet (shapes in head units: 1 = height of the head)
+  character grid <image.png> [--step 32] [--out f.png]   Numbered grid over a reference, to read landmarks by eye
+  character measure <landmarks.json>   Pixels read on a reference -> positions and widths in head units
+  character plan <spec.json> --out plan.png [--view front|back] [--lines] [--guides] [--size 512]
+                                   Flat plan drawn from the sheet: the start image for generate --init (strength ~0.75)
+  character audit <spec.json> <image.png> [--view front] [--tolerance 0.15] [--rows]
+                                   Width of the head, shoulders/arms and trousers vs the sheet: on-model | off-model
+ vision status | models         The ONE vision-language model pinned for this project (.local-designer.json "vision") and the server's models
+ vision pin --model <id> [--url http://127.0.0.1:1234/v1] [--force]   Pin it (committed with the project; never chosen by the tool)
+ vision ask <image>... --prompt "..." [--max-tokens 4096] [--max-side 1024] [--timeout 300]   Ask the pinned model about 1-4 images
+ vision review <image>... [--brief f.json] [--checks "a;b"] [--context "..."]   Checklist per image: ok | to-check | fail
+          Local server only; --allow-remote after the user agreed. No fallback to another model.
   generate --charter [file] --prompt "subject" ...   Lock: refuses to run until the charter is active; uses its style and negative
   inspect <image.png>            Print the prompt and parameters stored in a PNG by any registered engine
 Common: --connector <id> (or env LOCAL_DESIGNER_CONNECTOR, default: first engine that answers)
@@ -749,6 +887,8 @@ Common: --connector <id> (or env LOCAL_DESIGNER_CONNECTOR, default: first engine
 async function main() {
   try {
     const { command, opts } = parseArgs(process.argv.slice(2));
+    // One design target for the charter, the styles and the mood boards (see design-target.mjs).
+    if (optStr(opts, 'design-dir')) process.env.LOCAL_DESIGNER_DESIGN_DIR = resolve(optStr(opts, 'design-dir'));
     let result;
     if (command === 'status') result = await cmdStatus(opts);
     else if (command === 'generate') result = await cmdGenerate(opts);
@@ -762,6 +902,8 @@ async function main() {
     else if (command === 'brief') result = cmdBrief(opts);
     else if (command === 'moodboard') result = await cmdMoodboard(opts);
     else if (command === 'charter') result = cmdCharter(opts);
+    else if (command === 'character') result = cmdCharacter(opts);
+    else if (command === 'vision') result = await cmdVision(opts);
     else if (command === 'connectors') result = await cmdConnectors(opts);
     else if (command === 'migrate') result = cmdMigrate(opts);
     else {

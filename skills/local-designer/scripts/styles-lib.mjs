@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { designStylesDir, resolveDesignDir } from './design-target.mjs';
 
 export const BUNDLED_STYLES_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../styles');
 export const USER_STYLES_DIR = join(homedir(), '.local-designer', 'styles');
@@ -13,12 +14,14 @@ export const CATEGORIES = ['photo', 'vector', 'cartoon', 'drawing', 'technical',
 const NAME_RE = /^[a-z0-9][a-z0-9-]*$/;
 
 // Folders searched, in order. A later folder overrides an earlier style with the same name:
-// bundled < ~/.drawthing/styles (former) < ~/.local-designer/styles < $DRAWTHING_STYLES (former) < $LOCAL_DESIGNER_STYLES
-// (colon separated, e.g. a project's own styles).
-export function styleDirs(extra = [], env = process.env) {
+// bundled < ~/.drawthing/styles (former) < ~/.local-designer/styles < <design dir>/styles (the project target)
+// < $DRAWTHING_STYLES (former) < $LOCAL_DESIGNER_STYLES (colon separated).
+export function styleDirs(extra = [], env = process.env, cwd = process.cwd()) {
   const split = (value) => (value ?? '').split(':').filter(Boolean);
   const envDirs = [...split(env.DRAWTHING_STYLES), ...split(env.LOCAL_DESIGNER_STYLES)];
+  const target = resolveDesignDir({ env, cwd });
   return [{ dir: BUNDLED_STYLES_DIR, origin: 'bundled' }, { dir: LEGACY_STYLES_DIR, origin: 'user' }, { dir: USER_STYLES_DIR, origin: 'user' },
+    ...(target ? [{ dir: designStylesDir(target), origin: 'project' }] : []),
     ...envDirs.map((dir) => ({ dir: resolve(dir), origin: 'env' })), ...extra.map((dir) => ({ dir: resolve(dir), origin: 'extra' }))];
 }
 

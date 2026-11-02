@@ -19,12 +19,12 @@ Answer these five questions (ask the user for what you cannot infer; at most 3 q
 
 | Entry | Tools | What you do |
 |---|---|---|
-| **An image to imitate or extend** | `analyze <img>`, `match <img>`, `styles draft <img>` | Measure palette, light, contrast, flatness; find the closest library styles; draft a new style from it; look at the image yourself for medium and mood |
+| **An image to imitate or extend** | `analyze <img>`, `match <img>`, `styles draft <img>`, `vision ask <img>` | Measure palette, light, contrast, flatness; find the closest library styles; draft a new style from it; ask the image analyst ([`vision.md`](vision.md)) for medium and mood |
 | **A written brief** | `recommend --brief "..."` | Rank styles (French or English); propose 3 with their thumbnails |
 | **A question / answer session** | questions of section 1, then `recommend` | Turn the answers into a brief, then proceed as above |
 | **A project folder** | `project-scan <dir>` | Read name, README, keywords, brand colours and fonts; propose a look that fits the project; confirm before generating |
 
-Thumbnails live in `styles/thumbs/<style>.webp` (see `styles/README.md`). Open them next to the user's choice.
+Thumbnails live in `styles/thumbs/<style>.webp` (see `styles/README.md`). Show them next to the user's choice, using the preview order of [`preview.md`](preview.md) (agent CLI first, then IDE browser, then external browser).
 
 ## 3. Choose the medium by use
 
@@ -50,6 +50,8 @@ Always render the composition with `styles thumb <name>` before trusting it.
 5. **Constraints**: "no text" for anything that must carry words (add text in the layout tool), plain or soft background for slides.
 6. **People**: synthetic people only. Never name or describe a real person; for photo styles avoid close-up hands.
 7. **Consistency across a set**: same style, model, steps, guidance, aspect ratio; change only subject and seed.
+8. **A recurring character** (mascot, hero): do not describe it from memory. Measure the reference image in head units and write the
+   proportions, joints and limbs into a fixed block ([`character-design.md`](character-design.md)).
 
 ## 5. Mood board for a client (validate before committing to a direction)
 
@@ -59,8 +61,9 @@ When the person who pays is not the person who drives the tool, do not start fro
    forbidden terms, constraints. If an answer is missing, ask; do not invent it.
 2. **Three directions from different families** (`moodboard build`): for example technical line art, flat vector and illustrated cartoon.
    Three variations of the same look are not a choice. Each direction states why it fits, what to do, what to avoid and its main risk.
-3. **Trials only if useful** (`--trial`): 512 px, 8 steps, same seed. They show the spirit on the client's subject; look at them first and
-   drop a direction whose trial is wrong (wrong object, text, odd anatomy) rather than send it.
+3. **Trials only if useful** (`--trial`): one per direction and per scene, 640 px, 8 steps, same seed. They show the spirit on the client's subject;
+   have every one read by the image analyst (`vision review`, [`vision.md`](vision.md)) and redo or drop what is wrong (wrong object, missing item,
+   text, odd anatomy) rather than send it.
 4. **The client answers**: a letter and remarks. Record it (`moodboard decide`), one validated direction at a time; keep the comments, they feed the prompt.
 5. **Then and only then** `generate --moodboard`: the lock refuses otherwise, and uses the validated style, the brief subject, the format and the forbidden list.
 
@@ -84,4 +87,4 @@ Say clearly to the client what the board is: reference thumbnails show a **rende
 ## Sources of inspiration
 
 Style vocabulary (flat, doodle, sketch, riso, claymorphism, editorial, dithered, vintage) was cross-checked with the
-MIT-licensed design-style catalogue `bergside/awesome-design-skills` (user-interface oriented: translated here into image rendering terms).
+MIT-licensed aikido-design-style catalogue `bergside/awesome-design-skills` (user-interface oriented: translated here into image rendering terms).

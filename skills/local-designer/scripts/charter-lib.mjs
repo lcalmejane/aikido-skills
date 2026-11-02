@@ -5,6 +5,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { colourName, fromHex } from './design-tools.mjs';
+import { resolveDesignDir } from './design-target.mjs';
 
 export const CHARTER_FILE = 'design-charter.md';
 export const CHARTER_DIR = join('prompts', 'gen', 'concepts', 'design');
@@ -33,7 +34,7 @@ export const deltaE = (a, b) => Math.hypot(...toLab(a).map((v, i) => v - toLab(b
 export const chroma = (rgb) => { const [, a, b] = toLab(rgb); return Math.hypot(a, b); };
 const isNeutral = (rgb) => chroma(rgb) < 14;
 
-function withRoles(colours) {
+export function withRoles(colours) {
   let order = 0;
   return colours.map((c) => {
     const rgb = fromHex(c.hex);
@@ -143,12 +144,12 @@ export function renderRegion(c) {
   } else {
     lines.push('No style chosen yet.');
     if (c.style_candidates?.length) lines.push('', 'Candidates from the project scan:', '', ...c.style_candidates.map((s) => `- \`${s.name}\` (${s.category})`));
-    lines.push('', 'Validate a mood board direction (`/design-moodboard`) or run `charter activate --style NAME --by WHO`.');
+    lines.push('', 'Validate a mood board direction (`/aikido-design-moodboard`) or run `charter activate --style NAME --by WHO`.');
   }
   lines.push('', '## Rules', '', `- Forbidden: ${esc(list(c.brand?.forbidden))}`, `- Constraints: ${esc(list(c.constraints))}`, '');
   lines.push('## Validation', '');
   if (c.status === 'active') {
-    lines.push(`- Active, validated by ${esc(c.validated_by)} on ${String(c.validated_at).slice(0, 10)}${c.sources?.moodboard ? ` (mood board \`${c.sources.moodboard}\`, kept outside git)` : ''}.`);
+    lines.push(`- Active, validated by ${esc(c.validated_by)} on ${String(c.validated_at).slice(0, 10)}${c.sources?.moodboard ? ` (mood board \`${c.sources.moodboard}\`)` : ''}.`);
   } else lines.push('- Draft: not validated, image generation with `--charter` is locked.');
   lines.push('', '## Decision log', '', '| Date | By | Decision |', '|---|---|---|', ...(c.decisions ?? []).map((d) => `| ${String(d.at).slice(0, 10)} | ${esc(d.by)} | ${esc(d.note)} |`), '');
   // Backticks are escaped so a note can never close the fence; the JSON stays valid.
@@ -189,14 +190,18 @@ export function findProjectRoot(start = process.cwd()) {
   }
 }
 
-export function charterFile({ dir, root, cwd = process.cwd() } = {}) {
+// Priority: explicit folder/file > --root (legacy layout under that project) > design target (see design-target.mjs) > legacy layout above cwd.
+export function charterFile({ dir, root, cwd = process.cwd(), env = process.env } = {}) {
   if (dir) { const p = resolve(dir); return p.endsWith('.md') ? p : join(p, CHARTER_FILE); }
-  const r = root ? resolve(root) : findProjectRoot(cwd);
+  if (root) return join(resolve(root), CHARTER_DIR, CHARTER_FILE);
+  const target = resolveDesignDir({ env, cwd });
+  if (target) return join(target, CHARTER_FILE);
+  const r = findProjectRoot(cwd);
   return r ? join(r, CHARTER_DIR, CHARTER_FILE) : null;
 }
 
 export function loadCharter(file) {
-  if (!file || !existsSync(file)) throw new Error(`No design charter at ${file ?? 'prompts/gen/concepts/design/design-charter.md'}. Create it with: charter init (command /init-design).`);
+  if (!file || !existsSync(file)) throw new Error(`No design charter at ${file ?? 'prompts/gen/concepts/design/design-charter.md'}. Create it with: charter init (command /aikido-init-design).`);
   const text = readFileSync(file, 'utf8');
   return { file, text, ...parseCharter(text) };
 }
@@ -218,7 +223,7 @@ export function registerInIndexes(file) {
   const touched = [];
   const own = join(dir, 'index.md');
   if (!existsSync(own)) {
-    writeFileSync(own, `# Design\n\nVisual identity of the project, used by the \`local-designer\` skill (\`/init-design\`).\n\n## Available Files\n\n- [\`${CHARTER_FILE}\`](${CHARTER_FILE}): Design charter: palette, typography, render style, constraints and decision log\n`);
+    writeFileSync(own, `# Design\n\nVisual identity of the project, used by the \`local-designer\` skill (\`/aikido-init-design\`).\n\n## Available Files\n\n- [\`${CHARTER_FILE}\`](${CHARTER_FILE}): Design charter: palette, typography, render style, constraints and decision log\n`);
     touched.push(own);
   }
   const parentIndex = join(dir, '..', 'index.md');

@@ -1,10 +1,10 @@
 ---
-name: init-design
-description: Create the project's design charter (palette, typography, render style, constraints) in the AI-KIDO Memory Bank prompts/gen/concepts/design/
+name: aikido-init-design
+description: Create the project's design charter (palette, typography, render style, constraints) in the project's design target (design/ or prompts/gen/concepts/design/)
 category: local-designer
 ---
 
-# Command: /init-design
+# Command: /aikido-init-design
 
 ## Description
 
@@ -19,10 +19,10 @@ committed. Mood boards and renders stay in `~/local-designer-lab` (outside git).
 ## Usage
 
 ```
-/init-design                          scan the project, create a draft
-/init-design --brief brief.json       start from a client brief
-/init-design --moodboard <dir>        start from the direction the client validated: creates an active charter
-/init-design --force                  rebuild an existing charter (revision +1, decision log kept)
+/aikido-init-design                          scan the project, create a draft
+/aikido-init-design --brief brief.json       start from a client brief
+/aikido-init-design --moodboard <dir>        start from the direction the client validated: creates an active charter
+/aikido-init-design --force                  rebuild an existing charter (revision +1, decision log kept)
 ```
 
 ## Prerequisites
@@ -33,10 +33,10 @@ committed. Mood boards and renders stay in `~/local-designer-lab` (outside git).
 ## Behavior
 
 1. **Look first**: if `prompts/gen/concepts/design/design-charter.md` exists, run `charter show` and ask whether to
-   update it (`/design-charter`) or rebuild it (`--force`). Never overwrite silently.
+   update it (`/aikido-design-charter`) or rebuild it (`--force`). Never overwrite silently.
 2. **Choose the sources** with the user, in this order of trust:
    a. a **validated mood board**: `node <skill-dir>/scripts/local-designer.mjs charter init --moodboard <dir> --by "<who>"`
-      (refuses if no direction is validated: ask the client first, see `/design-moodboard`);
+      (refuses if no direction is validated: ask the client first, see `/aikido-design-moodboard`);
    b. a **brief**: `brief template`, fill it with the user, `brief check`, then `charter init --brief brief.json`;
    c. a **scan** of the project: `charter init --scan` (brand colours and fonts found in style sheets, keywords and
       suitable styles from the README and `package.json`). Heuristic: show the result and have it confirmed.
@@ -65,4 +65,4 @@ Path of the charter, its state (draft or active), revision, style, warnings, and
 
 ## Agent
 
-`art-director` ([`../agents/art-director.md`](../agents/art-director.md)).
+`agent-aikido-art-director` ([`../agents/agent-aikido-art-director.md`](../agents/agent-aikido-art-director.md)).

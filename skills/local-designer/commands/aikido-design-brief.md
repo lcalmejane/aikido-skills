@@ -1,10 +1,10 @@
 ---
-name: design-brief
+name: aikido-design-brief
 description: Write and validate the structured client brief (JSON) that frames every Draw Things image
 category: local-designer
 ---
 
-# Command: /design-brief
+# Command: /aikido-design-brief
 
 ## Description
 
@@ -14,7 +14,7 @@ subject, format, realism level, brand palette and forbidden terms. No image is g
 ## Usage
 
 ```
-/design-brief [project folder | free description]
+/aikido-design-brief [project folder | free description]
 ```
 
 ## Behavior
@@ -33,8 +33,8 @@ subject, format, realism level, brand palette and forbidden terms. No image is g
 ## Output
 
 Path of the validated `brief.json` and a three-line summary (message, audience, subject).
-Next step: `/design-moodboard`.
+Next step: `/aikido-design-moodboard`.
 
 ## Agent
 
-`art-director` ([`../agents/art-director.md`](../agents/art-director.md)).
+`agent-aikido-art-director` ([`../agents/agent-aikido-art-director.md`](../agents/agent-aikido-art-director.md)).

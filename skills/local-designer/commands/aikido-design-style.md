@@ -1,10 +1,10 @@
 ---
-name: design-style
+name: aikido-design-style
 description: Choose, compare, compose and create Draw Things render styles from a need, an image or a project
 category: local-designer
 ---
 
-# Command: /design-style
+# Command: /aikido-design-style
 
 ## Description
 
@@ -14,12 +14,12 @@ Use it to pick a look, to build a new one from an image, or to blend two existin
 ## Usage
 
 ```
-/design-style recommend "<need in French or English>"
-/design-style list [--category c] [--tag t]
-/design-style show <name>
-/design-style from-image <image> [--save --name n]
-/design-style compose <a> <b> [--name n --save]
-/design-style thumb <name>
+/aikido-design-style recommend "<need in French or English>"
+/aikido-design-style list [--category c] [--tag t]
+/aikido-design-style show <name>
+/aikido-design-style from-image <image> [--save --name n]
+/aikido-design-style compose <a> <b> [--name n --save]
+/aikido-design-style thumb <name>
 ```
 
 ## Behavior
@@ -41,4 +41,4 @@ A short list (name, category, why it fits) or the path of the saved style file.
 
 ## Agent
 
-`art-director` ([`../agents/art-director.md`](../agents/art-director.md)).
+`agent-aikido-art-director` ([`../agents/agent-aikido-art-director.md`](../agents/agent-aikido-art-director.md)).

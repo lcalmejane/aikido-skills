@@ -11,21 +11,21 @@
     {
       "name": "jira",
       "description": "Bidirectional JIRA Cloud sync, Agile KPI analysis and interactive HTML reports for the AI-KIDO Memory Bank (/jira-* commands).",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "category": "integration",
       "path": "skills/jira"
     },
     {
       "name": "local-designer",
-      "description": "Local image design for agents: art-director agent, structured client brief and mood board with a validation lock before generation, a design charter kept in the Memory Bank (/init-design) with palette audit, 29 illustrated render styles, style recommendation from a brief, an image or a project, sweeps kept outside git, parameter knowledge base. Generation through a connector: Draw Things over HTTP or gRPC (server's real model list, TLS with fingerprint, local or remote server), ComfyUI planned.",
-      "version": "4.3.0",
+      "description": "Local image design for agents: agent-aikido-art-director agent and agent-aikido-image-analyst agent (every image is read through one pinned local vision-language model, no fallback), structured client brief and mood board (directions shown in several scenes, palette with roles, typography, textures, what each direction rules out, page preview) with a validation lock before generation, a per-project design target (charter, styles and mood boards in one versioned folder, /aikido-init-design) with palette audit, 29 illustrated render styles, style recommendation from a brief, an image or a project, sweeps kept outside git, parameter knowledge base. Generation through a connector: Draw Things over HTTP or gRPC (server's real model list, TLS with fingerprint, local or remote server), ComfyUI planned.",
+      "version": "5.2.0",
       "category": "generation",
       "path": "skills/local-designer"
     },
     {
       "name": "confluence",
       "description": "Bidirectional Markdown <-> Confluence Cloud sync with YAML metadata and last-write-wins (/confluence-* commands).",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "category": "integration",
       "path": "skills/confluence"
     }

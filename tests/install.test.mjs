@@ -41,7 +41,7 @@ test('every command declared in SKILL.md has a definition with a matching name',
   const text = read('SKILL.md');
   const section = text.split(/^## Available Commands\s*$/m)[1]?.split(/^## /m)[0] ?? '';
   const commands = [...section.matchAll(/^- `\/([a-z0-9-]+)/gm)].map((m) => m[1]);
-  assert.deepEqual(commands.sort(), ['design-audit', 'design-brief', 'design-charter', 'design-moodboard', 'design-render', 'design-style', 'init-design']);
+  assert.deepEqual(commands.sort(), ['aikido-design-audit', 'aikido-design-brief', 'aikido-design-charter', 'aikido-design-moodboard', 'aikido-design-render', 'aikido-design-style', 'aikido-init-design']);
   for (const cmd of commands) {
     const file = `commands/${cmd}.md`;
     assert.ok(existsSync(join(SKILL, file)), `${file} is missing`);
@@ -51,17 +51,21 @@ test('every command declared in SKILL.md has a definition with a matching name',
   }
 });
 
-test('install-aikido.md registers every command and the agent', () => {
+test('install-aikido.md registers every command and both agents', () => {
   const install = read('install-aikido.md');
-  for (const cmd of ['init-design', 'design-charter', 'design-audit', 'design-brief', 'design-moodboard', 'design-render', 'design-style']) assert.ok(install.includes(cmd), cmd);
+  for (const cmd of ['aikido-init-design', 'aikido-design-charter', 'aikido-design-audit', 'aikido-design-brief', 'aikido-design-moodboard', 'aikido-design-render', 'aikido-design-style']) assert.ok(install.includes(cmd), cmd);
   assert.ok(install.includes('agent-aikido-art-director'));
+  assert.ok(install.includes('agent-aikido-image-analyst'));
+  assert.ok(install.includes('.claude/agents/agent-aikido-image-analyst.md'));
+  assert.ok(install.includes('slug: agent-aikido-image-analyst'));
   assert.ok(install.includes('skills_list.md') && install.includes('commands_list.md') && install.includes('agents_list.md'));
 });
 
 test('markdown links inside the skill point to existing files', () => {
-  const files = ['SKILL.md', 'install-aikido.md', 'agents/art-director.md', 'commands/design-brief.md',
-    'commands/design-moodboard.md', 'commands/design-render.md', 'commands/design-style.md', 'commands/init-design.md',
-    'commands/design-charter.md', 'commands/design-audit.md'];
+  const files = ['SKILL.md', 'install-aikido.md', 'agents/agent-aikido-art-director.md', 'agents/agent-aikido-image-analyst.md', 'references/vision.md',
+    'references/preview.md', 'references/art-direction.md', 'references/character-design.md', 'commands/aikido-design-brief.md',
+    'commands/aikido-design-moodboard.md', 'commands/aikido-design-render.md', 'commands/aikido-design-style.md', 'commands/aikido-init-design.md',
+    'commands/aikido-design-charter.md', 'commands/aikido-design-audit.md'];
   const missing = [];
   for (const rel of files) {
     for (const m of read(rel).matchAll(/\]\(((?!https?:|#|prompts\/)[^)\s#]+)\)/g)) {
@@ -69,6 +73,20 @@ test('markdown links inside the skill point to existing files', () => {
     }
   }
   assert.deepEqual(missing, []);
+});
+
+// The rule "one reader for every image" must stay written wherever an agent or a command is told to judge an image.
+test('every place that judges an image delegates to the image analyst and the skill documents the vision command', () => {
+  for (const rel of ['agents/agent-aikido-art-director.md', 'commands/aikido-design-moodboard.md', 'commands/aikido-design-render.md',
+    'commands/aikido-design-audit.md', 'references/art-direction.md', 'references/character-design.md', 'SKILL.md']) {
+    assert.match(read(rel), /image[- ]analyst/, `${rel} must send image reading to agent-aikido-image-analyst`);
+  }
+  assert.match(read('SKILL.md'), /\| `vision status\\\|models\\\|pin\\\|ask\\\|review` \|/, 'SKILL.md lists the vision command');
+  const front = /^---\n([\s\S]*?)\n---/.exec(read('agents/agent-aikido-image-analyst.md'))?.[1] ?? '';
+  assert.match(read('agents/agent-aikido-image-analyst.md'), /never run `vision pin`/i, 'the analyst must not pin a model by itself');
+  assert.match(front, /^name:\s*agent-aikido-image-analyst\s*$/m);
+  assert.match(front, /^description:\s*\S/m);
+  assert.ok(!/fallback to|falls back to|try another model/i.test(read('references/vision.md').replace(/no fallback|No fallback|never[^.]*fallback/gi, '')), 'vision.md must not describe a fallback');
 });
 
 test('SKILL.md version matches the catalog and no path depends on the checkout location', () => {

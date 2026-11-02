@@ -8,7 +8,8 @@ description: Local image design for agents: art direction, client brief and mood
 ## Description
 An art director for agents: choose a visual language, validate it with the client, then create and tune
 images with the user (drafts, final art, style exploration, parameter tuning). The skill holds the
-**tools** (`scripts/`), 29 render presets with thumbnails (`styles/`), an art-director agent (`agents/`),
+**tools** (`scripts/`), 29 render presets with thumbnails (`styles/`), two agents (`agents/`): agent-aikido-art-director and
+agent-aikido-image-analyst (the only one that reads images, through one pinned vision model),
 four `/design-*` commands (`commands/`) and the **knowledge** on parameters and looks (`references/`).
 
 ## Connectors
@@ -28,7 +29,7 @@ The contract and how to add a connector are in [`references/connectors.md`](refe
 
 ## Metadata
 - **Name**: local-designer
-- **Version**: 4.3.0
+- **Version**: 5.2.0
 - **Category**: generation
 - **Requires**: Node.js 18+, `cwebp` (WebP export, thumbnails), ImageMagick or `sips` (image analysis). For generation with the Draw Things connector: macOS and the app with its API server enabled
 
@@ -63,35 +64,59 @@ anything that leaves the machine needs the user's agreement.
 | `match <image>` | Library styles whose thumbnail is closest to an image |
 | `project-scan [dir]` | Infer subject, brand palette, fonts and suitable styles from a project folder (read only) |
 | `brief template` / `brief check <file>` | Structured client brief (JSON): print the template, validate a file |
-| `moodboard build --brief f.json` | Build the client mood board (`moodboard.html`, `board.json`, `decision.json`) **outside git**; `--trial` adds small renders of the real subject |
+| `moodboard build --brief f.json` | Build the client mood board (`moodboard.html`, `board.json`, `decision.json`) in the design target (`<design dir>/moodboards/<date>-<project>/`); `--trial` adds small renders of each scene |
 | `moodboard decide <dir> --track A --state validated` | Record the client's answer (`selected`, `rejected`, `validated`, `--comment`, `--by`) |
-| `moodboard trial|status|html <dir>` | Render trials (`--track A,B --size 512 --steps 8 --resume`), show the state, rebuild the page |
+| `moodboard trial|status|html <dir>` | Render trials, one per direction and per scene (`--track A,B --scene hero,detail --size 640 --steps 8 --resume`, saved as webp), show the state, rebuild the page |
 | `generate --moodboard <dir>` | **Lock**: refuses to run until a direction is validated, then uses its style, the brief subject, format and forbidden list |
-| `charter init\|show\|check\|render\|activate\|note` | Project design charter stored in the Memory Bank (`prompts/gen/concepts/design/design-charter.md`) |
+| `charter init\|show\|check\|render\|activate\|note` | Project design charter, stored in the design target (`<design dir>/design-charter.md`) |
 | `charter audit <image\|folder>...` | Compare the dominant colours of images with the charter palette (verdict per image + summary) |
 | `generate --charter --prompt "subject"` | **Lock**: refuses to run until the charter is active, then uses its style, negative prompt and format ratio |
+| `character check\|grid\|measure\|plan\|audit` | Character model sheet (proportions in head units): plan drawn from the sheet as the `--init` image, then `audit` answers `on-model` or `off-model` per zone. Method and tested values: `references/character-design.md` section 5 |
+| `vision status\|models\|pin\|ask\|review` | **The one reader of images.** A vision-language model pinned in `.local-designer.json` (`vision`), local server only (OpenAI-compatible: LM Studio, Ollama, llama.cpp...), no fallback to another model. `ask` answers a question about 1-4 images, `review` answers a checklist per image (`ok`, `to-check`, `fail`). Used through `agent-aikido-image-analyst`: [`references/vision.md`](references/vision.md) |
 
-### Design charter (the project's identity, kept in the Memory Bank)
-A mood board is for one client proposal and stays outside git. The charter is the **durable result**: palette with roles,
+### Design target (where the design of a project lives)
+One folder holds everything: `design-charter.md`, `styles/` (the project's own styles, they override the bundled ones) and
+`moodboards/<date>-<project>/`. It is found, in this order: `--design-dir <dir>`, `LOCAL_DESIGNER_DESIGN_DIR`, the `design_dir`
+key of the nearest `.local-designer.json` above the current folder (relative to that file), then none (former layout below).
+```json
+{ "design_dir": "design" }
+```
+Everything in it is versioned with the project, so **no absolute path is ever written** and renders are webp (about 20-50 KB each).
+Without a target, the former layout applies: charter in `prompts/gen/concepts/design/`, mood boards in `~/local-designer-lab`,
+and the CLI refuses a mood board folder inside a git repository (a client brief is not project source). Inside the target it is allowed.
+
+### Design charter (the project's identity)
+A mood board is one proposal to the client. The charter is the **durable result**: palette with roles,
 typography, validated render style, forbidden terms, constraints and a dated decision log, in
-`prompts/gen/concepts/design/design-charter.md` (text and hex colours only: no image, no absolute path, safe to commit).
+`<design dir>/design-charter.md` (text and hex colours only: no image, no absolute path, safe to commit).
 1. `charter init` from a validated mood board (`--moodboard <dir>`), a brief (`--brief f.json`) and/or a project scan (`--scan`).
    Brief or scan alone give a **draft** (3 style candidates); a validated direction gives an **active** charter.
 2. `charter activate --style NAME --by "<who>"` validates a style directly. The validator's name is mandatory.
 3. `generate --charter --prompt "<subject>" --out f.png`: only once active. `--charter` and `--moodboard` are two different locks.
 4. `charter note "..." --by who` logs a client remark; `charter audit <images>` measures colour drift against the palette.
 5. The JSON block between the markers is the source of truth; `charter render` rewrites the text from it. Notes written
-   after the end marker are never touched. Run from the project, or pass `--root <project>` / `--dir <folder>`.
-Commands: `/init-design`, `/design-charter`, `/design-audit`.
+   after the end marker are never touched. Run from the project (target found by `.local-designer.json`), or pass
+   `--design-dir <folder>`, `--root <project>` (former layout) or `--dir <folder>`.
+Commands: `/aikido-init-design`, `/aikido-design-charter`, `/aikido-design-audit`.
 
 ### Mood board (validate a direction with the client before generating)
-1. `brief template`, fill it (message, audience, uses, subject, format ratio, realism, brand palette and forbidden terms), `brief check`.
-2. `moodboard build --brief brief.json [--styles a,b,c] [--count 3] [--trial]`: directions A, B, C taken from different families, each with
-   reference thumbnail, palette (brand colours first), keywords, do / avoid, risks, sample subject (and a trial render with `--trial`).
-3. Send `moodboard.html` (one file, images embedded, no script, no link) to the client and wait for the answer.
+A direction is shown **in situation**, not as one picture: the same scenes rendered in each style, so the client compares like with like.
+1. `brief template`, fill it: message, audience, **positioning** (one sentence), uses, format, realism, brand palette / fonts / forbidden terms,
+   **textures**, and 3-4 **`scenes`** (`id`, `label`, `subject`, `ratio`: home hero, close detail, section, mood). Without `scenes`, three
+   framings of `subject` are used. Then `brief check`.
+2. `moodboard build --brief brief.json [--styles a,b,c] [--count 3] [--trial]`: directions A, B, C taken from different families. Each board
+   has the scenes, the palette **with roles**, a typography proposal, textures, keywords, **what it says and what it rules out** (the looks of the
+   other directions plus the brand's forbidden list), do / avoid, risks and a small **page preview** built from its colours and font.
+   `--trial` renders every scene (3 directions x 4 scenes = 12 renders, about 7 minutes locally), as webp.
+   Trials are small (8 steps): they show the **spirit**, not the detail, and a scene's precise instructions are often not followed
+   (wrong object, missing item). Look at each one, say what is off, and re-run `moodboard trial <dir> --track B --scene geste` before sending.
+3. Show `moodboard.html` (one file, images embedded, no script, no link) to the client and wait for the answer. Preview in this order
+   ([`references/preview.md`](references/preview.md)): 1) the agent CLI / LLM host itself, if it can display HTML or images; 2) the IDE built-in
+   browser (VS Code and forks), served on `127.0.0.1` if `file://` is refused; 3) only then an external browser (`open`, `xdg-open`, `start`).
 4. `moodboard decide <dir> --track B --state validated --by "Name"`: one validated direction at a time; the page is rebuilt with the state and comments.
 5. `generate --moodboard <dir> --out final.png`: only now. History is kept in `decision.json`.
-The folder defaults to `~/local-designer-lab/<date>-moodboard-<project>` and the CLI refuses a folder inside a git repository.
+The folder defaults to `<design dir>/moodboards/<date>-<project>` (or `~/local-designer-lab/<date>-moodboard-<project>` without a target).
+An existing board with decisions is never overwritten: pick another `--out-dir` (for example `...-v2`) or pass `--force`.
 
 ### `styles` subcommands
 | Subcommand | Purpose |
@@ -130,21 +155,22 @@ It refuses an `--out-dir` inside a git repository unless `--allow-in-repo` is gi
 image does not stop the sweep.
 
 ## Available Commands
-- `/init-design` – Create the project design charter (palette, typography, render style) in `prompts/gen/concepts/design/`
-- `/design-charter` – Read, check, update and annotate the charter; generate images under its identity
-- `/design-audit` – Check images or a folder against the charter palette and report the drift
-- `/design-brief` – Write and validate the structured client brief (questions, project scan, `brief check`)
-- `/design-moodboard` – Build the client mood board (3 directions, optional real-subject trials) and record the client's decision
-- `/design-render` – Generate images: draft, tuning sweeps, final render behind the validation lock
-- `/design-style` – Choose, compare, compose and create render styles (recommend, analyze, match, compose, thumbs)
+- `/aikido-init-design` – Create the project design charter (palette, typography, render style) in `prompts/gen/concepts/design/`
+- `/aikido-design-charter` – Read, check, update and annotate the charter; generate images under its identity
+- `/aikido-design-audit` – Check images or a folder against the charter palette and report the drift
+- `/aikido-design-brief` – Write and validate the structured client brief (questions, project scan, `brief check`)
+- `/aikido-design-moodboard` – Build the client mood board (3 directions, optional real-subject trials) and record the client's decision
+- `/aikido-design-render` – Generate images: draft, tuning sweeps, final render behind the validation lock
+- `/aikido-design-style` – Choose, compare, compose and create render styles (recommend, analyze, match, compose, thumbs)
 
-Definitions: [`commands/`](commands/). Agent: [`agents/art-director.md`](agents/art-director.md).
+Definitions: [`commands/`](commands/). Agents: [`agents/agent-aikido-art-director.md`](agents/agent-aikido-art-director.md) (chooses and
+validates a visual language) and [`agents/agent-aikido-image-analyst.md`](agents/agent-aikido-image-analyst.md) (reads every image through one pinned vision model).
 Install into an AI-KIDO project: [`install-aikido.md`](install-aikido.md) (or `/skill-manage get --skill local-designer`).
 
 ## Instructions
 1. Run `status`. Note the model and `where` (local/remote). If not local, follow `references/local-and-cloud.md`.
 2. **Choose the look first.** Read [`references/art-direction.md`](references/art-direction.md) or load the
-   [`art-director`](agents/art-director.md) agent. From a brief: `recommend`; from an image: `analyze` / `match`; from a
+   [`agent-aikido-art-director`](agents/agent-aikido-art-director.md) agent. From a brief: `recommend`; from an image: `analyze` / `match`; from a
    project: `project-scan`. For a client project, build a **mood board** (section above) and wait for the validated
    direction; otherwise show the user 3 styles with their thumbnails (`styles/thumbs/`) and wait for a choice.
 3. Read [`references/parameters.md`](references/parameters.md) before changing parameters, and
@@ -154,7 +180,9 @@ Install into an AI-KIDO project: [`install-aikido.md`](install-aikido.md) (or `/
    `index.html`, and **wait for their choice** before spending time on finals. Then vary one parameter at a time
    (`--vary`). Do not write into the git project: validation images stay in `~/local-designer-lab`.
 6. Final generation: blocks until done; start it in the background when your tool has a time limit and poll the output.
-7. **Look at the result** before using it. Models ignore constraints (text, hands, faces).
+7. **Have the result read** before using it, by [`agent-aikido-image-analyst`](agents/agent-aikido-image-analyst.md) (`vision review <image>`). Models ignore
+   constraints (text, hands, faces). **Every judgement on the pixels of an image goes through that agent and its one pinned vision model**
+   ([`references/vision.md`](references/vision.md)): not by eye, not with another model. No model pinned (`vision status`): pin one with the user first.
 8. Keep the seed and prompt (`--sidecar`) so an image can be reproduced; publish WebP, keep PNG as original.
 9. Return the JSON result and name the produced files.
 
@@ -204,7 +232,10 @@ On failure: `{ "status": "error", "error": "..." }` and exit code 1.
   endpoint to list models, samplers or LoRAs. Use the gRPC connector to get the server's real lists, or the exact
   names shown in the app.
 - One generation at a time; a sweep runs sequentially (minutes per image at full size, about 2 to 3 minutes at 768x512 with a large model).
-- `analyze`, `match` and `recommend` are heuristics (64x64 measurements, keyword scoring): they support a choice, they do not replace looking at the image.
+- `analyze`, `match` and `recommend` are heuristics (64x64 measurements, keyword scoring): they support a choice, they do not look at the image: `vision` does.
+- `vision` depends on a vision-language model that the user runs and pins. It misses defects and invents some (hands, small text, counting, left/right);
+  `ok` means "the model found nothing". Verdicts are comparable only from the same model. Tested here against a stand-in server; a real model must be
+  tried on images with a known answer before it is pinned ([`references/vision.md`](references/vision.md)).
 - ControlNet, inpainting masks and video are exposed by the app but have no dedicated flag here: use `--set`
   and verify with `--dry-run`. Not tested.
 - Cloud/offload through the HTTP API is unverified (see `references/local-and-cloud.md`). Through gRPC, a server
@@ -223,8 +254,12 @@ On failure: `{ "status": "error", "error": "..." }` and exit code 1.
 - [`scripts/moodboard-html.mjs`](scripts/moodboard-html.mjs): self-contained client page (fr / en).
 - [`scripts/moodboard-state.mjs`](scripts/moodboard-state.mjs): `decision.json`, history, generation lock.
 - [`styles/`](styles/): JSON render presets, thumbnails in `styles/thumbs/`, illustrated gallery in [`styles/README.md`](styles/README.md).
-- [`agents/art-director.md`](agents/art-director.md): senior illustrator / art director agent.
+- [`agents/agent-aikido-art-director.md`](agents/agent-aikido-art-director.md): senior illustrator / art director agent.
+- [`agents/agent-aikido-image-analyst.md`](agents/agent-aikido-image-analyst.md): the only reader of images, through one pinned vision model.
+- [`scripts/vision-lib.mjs`](scripts/vision-lib.mjs): pinned model, local-only rule, OpenAI-compatible client, review checklist.
+- [`references/vision.md`](references/vision.md): why one model, pinning, `ask` / `review`, choosing a model, privacy.
 - [`references/art-direction.md`](references/art-direction.md): method, 4 entry points, medium by use, prompt checklist.
+- [`references/character-design.md`](references/character-design.md): mascot / character consistency: measured proportions in head units, joints, limb order, character sheet.
 - [`references/parameters.md`](references/parameters.md): every setting, ranges, failure modes.
 - [`references/prompting-and-styles.md`](references/prompting-and-styles.md): prompt anatomy, style table, tuning method.
 - [`references/local-and-cloud.md`](references/local-and-cloud.md): local, network, cloud/offload and privacy rules.

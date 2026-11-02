@@ -1,10 +1,10 @@
 ---
-name: design-render
+name: aikido-design-render
 description: Generate images with Draw Things (local or remote): drafts, tuning sweeps and the final render behind the validation lock
 category: local-designer
 ---
 
-# Command: /design-render
+# Command: /aikido-design-render
 
 ## Description
 
@@ -14,10 +14,10 @@ direction is validated; for a personal or exploratory image it can run with a ch
 ## Usage
 
 ```
-/design-render status [--url http://host:7860]
-/design-render draft  --subject "..." [--style name] [--moodboard <dir>]
-/design-render sweep  --subject "..." --styles a,b,c [--seeds 1,2] [--vary guidance=3,5]
-/design-render final  --moodboard <dir> --out <file.png> | --style name --prompt "..." --out <file.png>
+/aikido-design-render status [--url http://host:7860]
+/aikido-design-render draft  --subject "..." [--style name] [--moodboard <dir>]
+/aikido-design-render sweep  --subject "..." --styles a,b,c [--seeds 1,2] [--vary guidance=3,5]
+/aikido-design-render final  --moodboard <dir> --out <file.png> | --style name --prompt "..." --out <file.png>
 ```
 
 ## Behavior
@@ -32,7 +32,8 @@ direction is validated; for a personal or exploratory image it can run with a ch
 4. **final**: `generate --moodboard <dir> --out final.png` refuses until a direction is validated; it then applies
    that direction's style, the brief's subject and format, and adds the forbidden terms to the negative prompt.
    Use `--sidecar` to keep prompt and seed; `--webp` for publication.
-5. **Look at the result** (text, hands, faces, edges) and say what is wrong before the user sees it.
+5. **Have the result read by `agent-aikido-image-analyst`** (`vision review <image>`: text, hands, faces, edges) and say what is wrong before the user
+   sees it. Same pinned vision model for every image ([`../references/vision.md`](../references/vision.md)); never judge the pixels by yourself.
 
 Nothing is written into a git project until the user has validated the image.
 
@@ -42,4 +43,4 @@ JSON with `output`, `seed`, `seconds`, and the sidecar path; a one-line verdict 
 
 ## Agent
 
-`art-director` ([`../agents/art-director.md`](../agents/art-director.md)).
+`agent-aikido-art-director` ([`../agents/agent-aikido-art-director.md`](../agents/agent-aikido-art-director.md)).

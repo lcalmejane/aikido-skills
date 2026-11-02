@@ -9,7 +9,7 @@ repositories from which compatible skills can be imported.
 |---|---|---|
 | `jira` | integration | Bidirectional JIRA Cloud sync, Agile KPIs, HTML reports |
 | `confluence` | integration | Bidirectional Markdown <-> Confluence Cloud sync |
-| `local-designer` | generation | Local image design: art-director agent, client brief and mood board with validation lock before generation, 29 illustrated render styles, style recommendation (brief, image, project), sweeps, parameter knowledge base. Connector: Draw Things (ComfyUI planned) |
+| `local-designer` | generation | Local image design: agent-aikido-art-director agent, agent-aikido-image-analyst agent (the only reader of images, through one pinned local vision model), client brief and mood board with validation lock before generation, 29 illustrated render styles, style recommendation (brief, image, project), sweeps, parameter knowledge base. Connector: Draw Things (ComfyUI planned) |
 | `aikido-skill-example` | example | Minimal skeleton to copy |
 
 ## Layout
