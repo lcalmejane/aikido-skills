@@ -4,8 +4,8 @@
 
 ## Description
 
-Registers the `local-designer` skill, its seven commands and its two agents (agent-aikido-art-director and
-agent-aikido-image-analyst, the only reader of images) in an AI-KIDO project.
+Registers the `local-designer` skill, its eight commands and its two agents (agent-aikido-art-director and
+agent-aikido-image-analyst, which reads images silently) in an AI-KIDO project.
 Normally applied by `/skill-manage get --skill local-designer`, which copies the skill into
 `prompts/hard_points/system/local-designer/` and then follows this file.
 
@@ -22,7 +22,7 @@ Browsing, `recommend`, `brief` and `moodboard build` without `--trial` work with
 ### 1. `skills_list.md`
 
 ```markdown
-- **local-designer** – Drive Draw Things (macOS) locally or remotely: render styles, agent-aikido-art-director and agent-aikido-image-analyst agents (every image is read by one pinned vision model), client brief and mood board with a validation lock, sweeps, parameter knowledge base. – [`prompts/hard_points/system/local-designer/SKILL.md`](prompts/hard_points/system/local-designer/SKILL.md)
+- **local-designer** – Drive Draw Things (macOS) locally or remotely: render styles, agent-aikido-art-director and agent-aikido-image-analyst agents (images are read silently: the project's optional local vision model, otherwise the current model), client brief and mood board with a validation lock, sweeps, parameter knowledge base. – [`prompts/hard_points/system/local-designer/SKILL.md`](prompts/hard_points/system/local-designer/SKILL.md)
 ```
 
 ### 2. `commands_list.md`
@@ -35,18 +35,19 @@ Browsing, `recommend`, `brief` and `moodboard build` without `--trial` work with
 - **aikido-design-moodboard**: Build the client mood board and record the client's decision ([`aikido-design-moodboard.md`](prompts/hard_points/system/local-designer/commands/aikido-design-moodboard.md))
 - **aikido-design-render**: Generate images: draft, sweep, final behind the validation lock ([`aikido-design-render.md`](prompts/hard_points/system/local-designer/commands/aikido-design-render.md))
 - **aikido-design-style**: Choose, compare, compose and create render styles ([`aikido-design-style.md`](prompts/hard_points/system/local-designer/commands/aikido-design-style.md))
+- **aikido-design-uikit**: Create and maintain the UI kit: tokens, components, icons, button and zone images ([`aikido-design-uikit.md`](prompts/hard_points/system/local-designer/commands/aikido-design-uikit.md))
 ```
 
 ### 3. `agents_list.md`
 
 ```markdown
 | 🎨 **agent-aikido-art-director** | [agent-aikido-art-director.md](prompts/hard_points/system/local-designer/agents/agent-aikido-art-director.md) | Senior illustrator: turns a brief, an image or a project into a validated render style and images |
-| 👁️ **agent-aikido-image-analyst** | [agent-aikido-image-analyst.md](prompts/hard_points/system/local-designer/agents/agent-aikido-image-analyst.md) | The only reader of images: asks ONE pinned vision-language model (`vision ask` / `vision review`), local server, no fallback |
+| 👁️ **agent-aikido-image-analyst** | [agent-aikido-image-analyst.md](prompts/hard_points/system/local-designer/agents/agent-aikido-image-analyst.md) | Reads images silently: the project's optional local vision model (`vision ask` / `vision review`), otherwise the current model |
 ```
 
 ### 4. `.roo/commands/` and `.claude/commands/`
 
-One mapping file per command (`aikido-init-design`, `aikido-design-charter`, `aikido-design-audit`, `aikido-design-brief`, `aikido-design-moodboard`, `aikido-design-render`, `aikido-design-style`). Example for
+One mapping file per command (`aikido-init-design`, `aikido-design-charter`, `aikido-design-audit`, `aikido-design-brief`, `aikido-design-moodboard`, `aikido-design-render`, `aikido-design-style`, `aikido-design-uikit`). Example for
 `aikido-design-moodboard.md`:
 
 ```markdown
@@ -85,7 +86,7 @@ Never generate a final image for a client before a mood board direction is valid
 ```markdown
 ---
 name: agent-aikido-image-analyst
-description: Image analyst. The only agent that reads an image: it asks the one vision-language model pinned for the project, so every analysis goes through the same model. Use for any judgement on the pixels of an image (defects, text, pose, likeness, comparison).
+description: Image analyst. Reads images silently: the project's optional local vision model when one is set, otherwise the current model when it can see images. Use for any judgement on the pixels of an image (defects, text, pose, likeness, comparison).
 tools: Bash, Read
 model: inherit
 ---
@@ -96,7 +97,7 @@ Follow `prompts/hard_points/system/local-designer/agents/agent-aikido-image-anal
 
 Use when: an image has to be checked, described or compared (a render, a trial, a reference, a crop).
 Do not use when: only colour measures are needed (`analyze`), or no image is involved.
-Never read an image yourself or with another model: if no vision model is pinned (`vision status`), say so and ask the user to pin one. Never run `vision pin` yourself.
+The reader is chosen silently: the local model set for the project if any, otherwise you, when you can see images. Never announce or test the reader, never ask the user about it. Say something only if no reader can see images. Never run `vision pin` yourself.
 ```
 
 ### 6. `.roomodes` (Roo / Zoo)
@@ -118,11 +119,11 @@ Never read an image yourself or with another model: if no vision model is pinned
       - command
   - slug: agent-aikido-image-analyst
     switchable: true
-    name: 👁️ Image Analyst (pinned vision model)
+    name: 👁️ Image Analyst (reads images silently)
     roleDefinition: |-
-      Only reader of images for the local-designer skill. Asks the ONE vision-language model pinned in .local-designer.json.
+      Reader of images for the local-designer skill. Uses the optional local vision model set in .local-designer.json, otherwise the current model when it can see images. Silent: never announces or tests the reader.
       Full specification: prompts/hard_points/system/local-designer/agents/agent-aikido-image-analyst.md
-      Method: vision status, precise question or checklist (vision ask / vision review), verdict with evidence. No fallback model.
+      Method: precise question or checklist (vision checks / vision ask / vision review, or looking at the image), verdict with evidence.
     whenToUse: |-
       Use for any judgement on the pixels of an image: defects, text, pose, likeness to a reference, comparison of renders.
       Do not use for colour measures only (analyze) or tasks with no image.
@@ -146,7 +147,7 @@ grep "local-designer" skills_list.md
 - Briefs, mood boards, trials and sweeps are written to `~/local-designer-lab/` (outside git). The CLI refuses an
   output folder inside a git repository unless `--allow-in-repo` is given.
 - Nothing is sent over the network unless `--url` or `DRAWTHING_URL` points to a remote Draw Things.
-- `vision` sends images only to the vision server pinned in `.local-designer.json` (default `http://127.0.0.1:1234/v1`). A server
+- `vision` sends images only to the optional local vision server set in `.local-designer.json` (default `http://127.0.0.1:1234/v1`). A server
   outside this machine is refused unless `--allow-remote` is given after the user agreed. Commit `.local-designer.json`: it holds
   the model id and a URL, no secret.
 - Own styles: `~/.local-designer/styles`, or a project folder listed in `$LOCAL_DESIGNER_STYLES`.

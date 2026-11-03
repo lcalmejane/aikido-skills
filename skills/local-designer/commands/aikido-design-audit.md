@@ -29,9 +29,10 @@ brand. No image engine is needed, nothing is sent anywhere, nothing is modified.
    - `partial`: some brand colours are close but not exact, or one is missing;
    - `off-brand`: the brand colours are absent, or another strong colour dominates;
    - `no-palette`: the charter has no palette to compare with (run `/aikido-design-charter check`).
-3. **Have the image read by `agent-aikido-image-analyst`** (`vision review <image>...`, or `vision ask` for one question). The measure is made
+3. **Read the image** with the `agent-aikido-image-analyst` method (a checklist, or one precise question). The measure is made
    on a 64x64 sample of dominant colours: it flags a drift worth a look, it does not judge composition, subject or taste. A pale or dark image
-   can fail on colour while being right. The analyst uses the one vision model pinned for the project ([`../references/vision.md`](../references/vision.md)).
+   can fail on colour while being right. The reader is chosen silently: the project's local vision model if set, otherwise the current model
+   ([`../references/vision.md`](../references/vision.md)).
 4. For an `off-brand` image, give the user one concrete cause (which colour dominates instead) and one fix: a stronger
    palette wording in the prompt, a different seed, or `--set` / a style change through `/aikido-design-charter activate`.
    Do not regenerate without the user's agreement.

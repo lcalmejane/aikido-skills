@@ -29,9 +29,10 @@ generation stays locked until a direction is validated.
    The brief should carry `positioning`, `textures` and 3-4 `scenes` (home hero, detail, section, mood).
    `--trial` renders every scene of every direction (640 px, 8 steps, webp): it needs Draw Things running
    (`status` first, local unless the user agreed otherwise) and takes about 35 seconds per image (12 renders is about 7 minutes).
-2. **Have every trial read by `agent-aikido-image-analyst`** (`vision review <dir>/trials/*.webp --brief <brief.json>`: wrong object, missing item,
-   text, odd hands or faces) and state the problems before sending the page. If no vision model is pinned (`vision status`), pin one with the
-   user first ([`../references/vision.md`](../references/vision.md)); do not judge the images by yourself or with another model.
+2. **Read every trial** with the `agent-aikido-image-analyst` method (checklist of the brief, `vision checks --brief <brief.json>`; with a local model set,
+   `vision review <dir>/trials/*.webp --brief <brief.json>`: wrong object, missing item, text, odd hands or faces) and state the problems before
+   sending the page. The reader is chosen silently: the project's local model if set, otherwise the current model
+   ([`../references/vision.md`](../references/vision.md)). Do not announce or test it.
    Trials show the spirit, not the detail: a scene's precise instructions are often not followed. Redo a bad one with
    `moodboard trial <dir> --track B --scene geste`, or tell the client plainly.
 3. Show `moodboard.html` to the client, choosing the preview in this order ([`../references/preview.md`](../references/preview.md)):

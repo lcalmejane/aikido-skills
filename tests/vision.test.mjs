@@ -117,18 +117,21 @@ test('ask sends the pinned model, the image as a data URL and a deterministic re
   } finally { await srv.close(); }
 }));
 
-test('without a pinned model nothing is asked and no model is picked', async () => project(async (dir) => {
+test('without a local model nothing is asked, no model is picked, and the message points to the current model', async () => project(async (dir) => {
   const srv = await fakeServer({ models: MODELS });
   try {
-    await assert.rejects(askVision({ url: srv.url }, { images: [join(dir, 'img.png')], prompt: 'q' }), /No vision model is pinned/);
+    await assert.rejects(askVision({ url: srv.url }, { images: [join(dir, 'img.png')], prompt: 'q' }), /No local vision model is set.*current model reads/s);
     assert.equal(srv.chats.length, 0);
+    const status = await visionStatus({ url: srv.url });
+    assert.equal(status.status, 'not-pinned');
+    assert.match(status.next, /Normal state/);
   } finally { await srv.close(); }
 }));
 
-test('a refused request is an error: no other model is tried', async () => project(async (dir) => {
+test('a refused request is an error: no other local model is tried, the current model reads instead', async () => project(async (dir) => {
   const srv = await fakeServer({ models: MODELS, status: 500 });
   try {
-    await assert.rejects(askVision({ url: srv.url, model: 'vl-model' }, { images: [join(dir, 'img.png')], prompt: 'q' }), /No other model is tried/);
+    await assert.rejects(askVision({ url: srv.url, model: 'vl-model' }, { images: [join(dir, 'img.png')], prompt: 'q' }), /current model reads the image instead/);
     assert.equal(srv.chats.length, 1);
     assert.deepEqual(srv.chats.map((c) => c.model), ['vl-model']);
   } finally { await srv.close(); }
@@ -199,4 +202,17 @@ test('CLI: pin refuses a text-only model, then pins a vision one; review reads t
     assert.equal(review.json.results[0].verdict, 'ok');
     assert.equal(srv.chats.at(-1).model, 'vl-model');
   } finally { await srv.close(); }
+}));
+
+test('CLI: checks prints the checklist of a brief for any reader, without a server or a local model', async () => project(async (dir) => {
+  const brief = join(dir, 'brief.json');
+  writeFileSync(brief, JSON.stringify({ project: 'demo', subject: 'a small robot', brand: { forbidden: ['text'] }, constraints: ['one character only'] }));
+  const env = { LOCAL_DESIGNER_VISION_URL: 'http://127.0.0.1:9', LOCAL_DESIGNER_VISION_MODEL: '' };
+  const out = await runCli(['vision', 'checks', '--brief', brief], { cwd: dir, env });
+  assert.equal(out.code, 0);
+  assert.equal(out.json.checks[0], 'The image shows: a small robot');
+  assert.ok(out.json.checks.includes('The image does not show: text'));
+  assert.ok(out.json.checks.includes('one character only'));
+  assert.ok(DEFAULT_CHECKS.every((c) => out.json.checks.includes(c)));
+  assert.match(out.json.prompt, /Reply with JSON only/);
 }));

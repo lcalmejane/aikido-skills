@@ -24,7 +24,7 @@ Follow [`../references/art-direction.md`](../references/art-direction.md). In sh
 3. **Build the mood board** (`moodboard build --brief brief.json`): three directions from different families. Each one is shown
    in the same scenes, with palette and roles, typography, textures, what it says and what it rules out, and a page preview.
    Add `--trial` to render every scene at small size (webp), so the client judges on their own topic.
-   Have **every** render read by [`agent-aikido-image-analyst`](agent-aikido-image-analyst.md) first (`vision review <dir>/trials/*.webp --brief brief.json`:
+   Have **every** render read first by the method of [`agent-aikido-image-analyst`](agent-aikido-image-analyst.md) (checklist of the brief:
    wrong object, missing item, text, odd anatomy): precise instructions of a scene are often not followed at 8 steps. Say what is off,
    redo it (`moodboard trial <dir> --track B --scene geste`) or warn the client, before showing `moodboard.html`.
    **Preview in this order** ([`../references/preview.md`](../references/preview.md)): 1) your own agent CLI / LLM host, if it can
@@ -35,20 +35,21 @@ Follow [`../references/art-direction.md`](../references/art-direction.md). In sh
 5. **Never generate finals before a direction is validated**: use `generate --moodboard <dir>`, which refuses otherwise.
 6. **Draft** with `sweep` in `~/local-designer-lab` (outside git) if the validated direction needs adjusting: one subject, one seed, small size.
 7. **Tune** one parameter at a time (`--vary`), keep the seed and `--sidecar`.
-8. **Final render** at full size; have the image analyst read the result (text, hands, faces, edges) and say what is wrong before the user sees it.
+8. **Final render** at full size; read the result with the image analyst method (text, hands, faces, edges) and say what is wrong before the user sees it.
 9. **Capture the decision**: if the look is reusable, save it (`styles compose ... --save` or `styles draft ... --save`),
    render its thumbnail (`styles thumb <name>`) and document values that worked.
 10. **Keep the identity in the project**: once a direction is validated, offer `/aikido-init-design`
     (`charter init --moodboard <dir>`): the palette, typography, style and forbidden terms go into
     `<design dir>/design-charter.md`, which is committed. Later images use `generate --charter`;
-    check a batch with `charter audit <folder>`, then have the image analyst read each flagged image.
+    check a batch with `charter audit <folder>`, then read each flagged image with the image analyst method.
 
 ## Rules
 
-- **You do not read images yourself.** Every judgement on the pixels of an image (defects, text, pose, likeness to a reference,
-  comparison of two renders) goes to [`agent-aikido-image-analyst`](agent-aikido-image-analyst.md), which asks the one vision model
-  pinned for the project (`vision`, see [`../references/vision.md`](../references/vision.md)). If no model is pinned or the pinned one is
-  missing, say so and stop: neither you nor another model replaces it. `analyze` and `match` stay your measuring tools (numbers, not looking).
+- **Reading images is silent.** Every judgement on the pixels of an image (defects, text, pose, likeness to a reference,
+  comparison of two renders) follows [`agent-aikido-image-analyst`](agent-aikido-image-analyst.md): the project's optional local
+  vision model if one is set, otherwise your own vision as the current model, without announcing it, testing it or asking the user
+  about it ([`../references/vision.md`](../references/vision.md)). Say something only if no reader can see images at all.
+  `analyze` and `match` stay your measuring tools (numbers, not looking).
 - Local first: check `status` and `where`; anything remote or cloud needs the user's agreement ([`../references/local-and-cloud.md`](../references/local-and-cloud.md)).
 - Preview order: agent CLI / LLM host, then IDE built-in browser, then external browser. Never jump straight to the external browser.
 - Nothing goes into a git project until the user has validated it; drafts stay in `~/local-designer-lab`.

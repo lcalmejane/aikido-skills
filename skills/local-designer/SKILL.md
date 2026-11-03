@@ -1,6 +1,6 @@
 ---
 name: local-designer
-description: Local image design for agents: art direction, client brief and mood board with a validation lock before generation, 29 reusable render styles with thumbnails, style recommendation from a brief, an image or a project folder, sweeps with a contact sheet kept outside git, and a parameter knowledge base. Generation goes through a connector; two are available for Draw Things (macOS app): the HTTP API and gRPC, which lists the server's real models and reaches a local, remote or offload server.
+description: Local image design for agents: art direction, client brief and mood board with a validation lock before generation, a UI kit (design tokens in light and dark, standard components, icons, button and zone images) with five personalities to choose from, 29 reusable render styles with thumbnails, style recommendation from a brief, an image or a project folder, sweeps with a contact sheet kept outside git, and a parameter knowledge base. Generation goes through a connector; two are available for Draw Things (macOS app): the HTTP API and gRPC, which lists the server's real models and reaches a local, remote or offload server.
 ---
 
 # Local Designer Skill
@@ -9,7 +9,7 @@ description: Local image design for agents: art direction, client brief and mood
 An art director for agents: choose a visual language, validate it with the client, then create and tune
 images with the user (drafts, final art, style exploration, parameter tuning). The skill holds the
 **tools** (`scripts/`), 29 render presets with thumbnails (`styles/`), two agents (`agents/`): agent-aikido-art-director and
-agent-aikido-image-analyst (the only one that reads images, through one pinned vision model),
+agent-aikido-image-analyst (the method that reads images: the project's optional local vision model, otherwise the current model, silently),
 four `/design-*` commands (`commands/`) and the **knowledge** on parameters and looks (`references/`).
 
 ## Connectors
@@ -29,7 +29,7 @@ The contract and how to add a connector are in [`references/connectors.md`](refe
 
 ## Metadata
 - **Name**: local-designer
-- **Version**: 5.2.0
+- **Version**: 5.3.0
 - **Category**: generation
 - **Requires**: Node.js 18+, `cwebp` (WebP export, thumbnails), ImageMagick or `sips` (image analysis). For generation with the Draw Things connector: macOS and the app with its API server enabled
 
@@ -72,11 +72,12 @@ anything that leaves the machine needs the user's agreement.
 | `charter audit <image\|folder>...` | Compare the dominant colours of images with the charter palette (verdict per image + summary) |
 | `generate --charter --prompt "subject"` | **Lock**: refuses to run until the charter is active, then uses its style, negative prompt and format ratio |
 | `character check\|grid\|measure\|plan\|audit` | Character model sheet (proportions in head units): plan drawn from the sheet as the `--init` image, then `audit` answers `on-model` or `off-model` per zone. Method and tested values: `references/character-design.md` section 5 |
-| `vision status\|models\|pin\|ask\|review` | **The one reader of images.** A vision-language model pinned in `.local-designer.json` (`vision`), local server only (OpenAI-compatible: LM Studio, Ollama, llama.cpp...), no fallback to another model. `ask` answers a question about 1-4 images, `review` answers a checklist per image (`ok`, `to-check`, `fail`). Used through `agent-aikido-image-analyst`: [`references/vision.md`](references/vision.md) |
+| `uikit init\|variants\|decide\|set\|build\|check\|icons\|assets\|status\|note` | **UI kit** of the project in `<design dir>/uikit/`: tokens, components, icons, WebP button skins and zone backgrounds. Five personalities compared on one page, one chosen with `decide --by`. No image engine needed. See "UI kit" below and [`references/uikit.md`](references/uikit.md) |
+| `vision status\|models\|pin\|checks\|ask\|review` | **Optional local reader of images.** A vision-language model set in `.local-designer.json` (`vision`), local server only (OpenAI-compatible: LM Studio, Ollama, llama.cpp...). Without it the current model reads the images itself, silently. `checks` prints the checklist of a brief for any reader, `ask` answers a question about 1-4 images, `review` answers a checklist per image (`ok`, `to-check`, `fail`). Used through `agent-aikido-image-analyst`: [`references/vision.md`](references/vision.md) |
 
 ### Design target (where the design of a project lives)
-One folder holds everything: `design-charter.md`, `styles/` (the project's own styles, they override the bundled ones) and
-`moodboards/<date>-<project>/`. It is found, in this order: `--design-dir <dir>`, `LOCAL_DESIGNER_DESIGN_DIR`, the `design_dir`
+One folder holds everything: `design-charter.md`, `styles/` (the project's own styles, they override the bundled ones),
+`moodboards/<date>-<project>/` and `uikit/`. It is found, in this order: `--design-dir <dir>`, `LOCAL_DESIGNER_DESIGN_DIR`, the `design_dir`
 key of the nearest `.local-designer.json` above the current folder (relative to that file), then none (former layout below).
 ```json
 { "design_dir": "design" }
@@ -98,6 +99,14 @@ typography, validated render style, forbidden terms, constraints and a dated dec
    after the end marker are never touched. Run from the project (target found by `.local-designer.json`), or pass
    `--design-dir <folder>`, `--root <project>` (former layout) or `--dir <folder>`.
 Commands: `/aikido-init-design`, `/aikido-design-charter`, `/aikido-design-audit`.
+
+### UI kit (the project's interface vocabulary)
+`uikit init` takes the brand colours from options, a stylesheet (`--css`), the charter or a brief, then writes `uikit.json` and
+`variants.html`: **five personalities** (Doux, Net, Relief, Dense, Éditorial) with the same colours, to compare. `uikit decide <A-E> --by "<who>"`
+keeps one and builds `tokens.css` / `tokens.json` (light and dark), `components.css`, `tokens.vscode.css` (`--vscode-*` first), `icons.svg`
+and `showcase.html`. Every pair of colours is pulled to 4.5:1 (3:1 for non-text), hover and pressed fills included. `uikit set key=value`
+adjusts and rebuilds; `uikit assets` adds WebP button skins and zone backgrounds drawn by the skill itself. Only `uikit.json` is edited,
+everything else is generated. Command: `/aikido-design-uikit`. Details: [`references/uikit.md`](references/uikit.md).
 
 ### Mood board (validate a direction with the client before generating)
 A direction is shown **in situation**, not as one picture: the same scenes rendered in each style, so the client compares like with like.
@@ -158,13 +167,14 @@ image does not stop the sweep.
 - `/aikido-init-design` – Create the project design charter (palette, typography, render style) in `prompts/gen/concepts/design/`
 - `/aikido-design-charter` – Read, check, update and annotate the charter; generate images under its identity
 - `/aikido-design-audit` – Check images or a folder against the charter palette and report the drift
+- `/aikido-design-uikit` – Create and maintain the UI kit (tokens, components, icons, button and zone images) from the brand colours
 - `/aikido-design-brief` – Write and validate the structured client brief (questions, project scan, `brief check`)
 - `/aikido-design-moodboard` – Build the client mood board (3 directions, optional real-subject trials) and record the client's decision
 - `/aikido-design-render` – Generate images: draft, tuning sweeps, final render behind the validation lock
 - `/aikido-design-style` – Choose, compare, compose and create render styles (recommend, analyze, match, compose, thumbs)
 
 Definitions: [`commands/`](commands/). Agents: [`agents/agent-aikido-art-director.md`](agents/agent-aikido-art-director.md) (chooses and
-validates a visual language) and [`agents/agent-aikido-image-analyst.md`](agents/agent-aikido-image-analyst.md) (reads every image through one pinned vision model).
+validates a visual language) and [`agents/agent-aikido-image-analyst.md`](agents/agent-aikido-image-analyst.md) (reads every image: optional local vision model, otherwise the current model, silently).
 Install into an AI-KIDO project: [`install-aikido.md`](install-aikido.md) (or `/skill-manage get --skill local-designer`).
 
 ## Instructions
@@ -180,9 +190,9 @@ Install into an AI-KIDO project: [`install-aikido.md`](install-aikido.md) (or `/
    `index.html`, and **wait for their choice** before spending time on finals. Then vary one parameter at a time
    (`--vary`). Do not write into the git project: validation images stay in `~/local-designer-lab`.
 6. Final generation: blocks until done; start it in the background when your tool has a time limit and poll the output.
-7. **Have the result read** before using it, by [`agent-aikido-image-analyst`](agents/agent-aikido-image-analyst.md) (`vision review <image>`). Models ignore
-   constraints (text, hands, faces). **Every judgement on the pixels of an image goes through that agent and its one pinned vision model**
-   ([`references/vision.md`](references/vision.md)): not by eye, not with another model. No model pinned (`vision status`): pin one with the user first.
+7. **Read the result** before using it, with the [`agent-aikido-image-analyst`](agents/agent-aikido-image-analyst.md) method. Models ignore
+   constraints (text, hands, faces). **The reader is chosen silently** ([`references/vision.md`](references/vision.md)): the project's optional local
+   vision model if one is set, otherwise the current model when it can see images. Do not announce it, test it before each use or ask the user about it.
 8. Keep the seed and prompt (`--sidecar`) so an image can be reproduced; publish WebP, keep PNG as original.
 9. Return the JSON result and name the produced files.
 
@@ -232,10 +242,10 @@ On failure: `{ "status": "error", "error": "..." }` and exit code 1.
   endpoint to list models, samplers or LoRAs. Use the gRPC connector to get the server's real lists, or the exact
   names shown in the app.
 - One generation at a time; a sweep runs sequentially (minutes per image at full size, about 2 to 3 minutes at 768x512 with a large model).
-- `analyze`, `match` and `recommend` are heuristics (64x64 measurements, keyword scoring): they support a choice, they do not look at the image: `vision` does.
-- `vision` depends on a vision-language model that the user runs and pins. It misses defects and invents some (hands, small text, counting, left/right);
-  `ok` means "the model found nothing". Verdicts are comparable only from the same model. Tested here against a stand-in server; a real model must be
-  tried on images with a known answer before it is pinned ([`references/vision.md`](references/vision.md)).
+- `analyze`, `match` and `recommend` are heuristics (64x64 measurements, keyword scoring): they support a choice, they do not look at the image: reading does.
+- Any reader (local model or current model) misses defects and invents some (hands, small text, counting, left/right);
+  `ok` means "nothing was found". Verdicts over time are comparable only from the same reader. A local model is optional; tested here against a stand-in
+  server, a real one must be tried on images with a known answer before it is pinned ([`references/vision.md`](references/vision.md)).
 - ControlNet, inpainting masks and video are exposed by the app but have no dedicated flag here: use `--set`
   and verify with `--dry-run`. Not tested.
 - Cloud/offload through the HTTP API is unverified (see `references/local-and-cloud.md`). Through gRPC, a server
@@ -253,11 +263,13 @@ On failure: `{ "status": "error", "error": "..." }` and exit code 1.
 - [`scripts/moodboard-lib.mjs`](scripts/moodboard-lib.mjs): brief schema and validation, direction building.
 - [`scripts/moodboard-html.mjs`](scripts/moodboard-html.mjs): self-contained client page (fr / en).
 - [`scripts/moodboard-state.mjs`](scripts/moodboard-state.mjs): `decision.json`, history, generation lock.
+- [`scripts/uikit-cli.mjs`](scripts/uikit-cli.mjs): the `uikit` subcommands; [`uikit-lib.mjs`](scripts/uikit-lib.mjs) (personalities, tokens, contrast check), [`uikit-color.mjs`](scripts/uikit-color.mjs), [`uikit-css.mjs`](scripts/uikit-css.mjs), [`uikit-icons.mjs`](scripts/uikit-icons.mjs), [`uikit-html.mjs`](scripts/uikit-html.mjs), [`uikit-raster.mjs`](scripts/uikit-raster.mjs) and [`uikit-assets.mjs`](scripts/uikit-assets.mjs) (pure JavaScript drawing of the images).
 - [`styles/`](styles/): JSON render presets, thumbnails in `styles/thumbs/`, illustrated gallery in [`styles/README.md`](styles/README.md).
 - [`agents/agent-aikido-art-director.md`](agents/agent-aikido-art-director.md): senior illustrator / art director agent.
-- [`agents/agent-aikido-image-analyst.md`](agents/agent-aikido-image-analyst.md): the only reader of images, through one pinned vision model.
-- [`scripts/vision-lib.mjs`](scripts/vision-lib.mjs): pinned model, local-only rule, OpenAI-compatible client, review checklist.
-- [`references/vision.md`](references/vision.md): why one model, pinning, `ask` / `review`, choosing a model, privacy.
+- [`agents/agent-aikido-image-analyst.md`](agents/agent-aikido-image-analyst.md): reads every image, silently: optional local model, otherwise the current model.
+- [`scripts/vision-lib.mjs`](scripts/vision-lib.mjs): optional local model, local-only rule, OpenAI-compatible client, review checklist.
+- [`references/uikit.md`](references/uikit.md): UI kit cycle, files, accessibility, images, use in a page, limits.
+- [`references/vision.md`](references/vision.md): who reads, setting a local model, `checks` / `ask` / `review`, choosing a model, privacy.
 - [`references/art-direction.md`](references/art-direction.md): method, 4 entry points, medium by use, prompt checklist.
 - [`references/character-design.md`](references/character-design.md): mascot / character consistency: measured proportions in head units, joints, limb order, character sheet.
 - [`references/parameters.md`](references/parameters.md): every setting, ranges, failure modes.

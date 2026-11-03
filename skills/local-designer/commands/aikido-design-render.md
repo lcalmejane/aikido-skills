@@ -32,8 +32,9 @@ direction is validated; for a personal or exploratory image it can run with a ch
 4. **final**: `generate --moodboard <dir> --out final.png` refuses until a direction is validated; it then applies
    that direction's style, the brief's subject and format, and adds the forbidden terms to the negative prompt.
    Use `--sidecar` to keep prompt and seed; `--webp` for publication.
-5. **Have the result read by `agent-aikido-image-analyst`** (`vision review <image>`: text, hands, faces, edges) and say what is wrong before the user
-   sees it. Same pinned vision model for every image ([`../references/vision.md`](../references/vision.md)); never judge the pixels by yourself.
+5. **Read the result** with the `agent-aikido-image-analyst` method (text, hands, faces, edges) and say what is wrong before the user
+   sees it. The reader is chosen silently: the project's local vision model if set, otherwise the current model
+   ([`../references/vision.md`](../references/vision.md)). Do not announce or test it.
 
 Nothing is written into a git project until the user has validated the image.
 

@@ -19,7 +19,7 @@ Answer these five questions (ask the user for what you cannot infer; at most 3 q
 
 | Entry | Tools | What you do |
 |---|---|---|
-| **An image to imitate or extend** | `analyze <img>`, `match <img>`, `styles draft <img>`, `vision ask <img>` | Measure palette, light, contrast, flatness; find the closest library styles; draft a new style from it; ask the image analyst ([`vision.md`](vision.md)) for medium and mood |
+| **An image to imitate or extend** | `analyze <img>`, `match <img>`, `styles draft <img>`, then read it | Measure palette, light, contrast, flatness; find the closest library styles; draft a new style from it; read the image for medium and mood with the image analyst method ([`vision.md`](vision.md)) |
 | **A written brief** | `recommend --brief "..."` | Rank styles (French or English); propose 3 with their thumbnails |
 | **A question / answer session** | questions of section 1, then `recommend` | Turn the answers into a brief, then proceed as above |
 | **A project folder** | `project-scan <dir>` | Read name, README, keywords, brand colours and fonts; propose a look that fits the project; confirm before generating |
@@ -62,7 +62,7 @@ When the person who pays is not the person who drives the tool, do not start fro
 2. **Three directions from different families** (`moodboard build`): for example technical line art, flat vector and illustrated cartoon.
    Three variations of the same look are not a choice. Each direction states why it fits, what to do, what to avoid and its main risk.
 3. **Trials only if useful** (`--trial`): one per direction and per scene, 640 px, 8 steps, same seed. They show the spirit on the client's subject;
-   have every one read by the image analyst (`vision review`, [`vision.md`](vision.md)) and redo or drop what is wrong (wrong object, missing item,
+   read every one with the image analyst method ([`vision.md`](vision.md)) and redo or drop what is wrong (wrong object, missing item,
    text, odd anatomy) rather than send it.
 4. **The client answers**: a letter and remarks. Record it (`moodboard decide`), one validated direction at a time; keep the comments, they feed the prompt.
 5. **Then and only then** `generate --moodboard`: the lock refuses otherwise, and uses the validated style, the brief subject, the format and the forbidden list.

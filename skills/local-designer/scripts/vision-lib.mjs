@@ -1,6 +1,7 @@
-// Vision: ONE vision-language model (VL) reads every image the skill has to judge.
-// The model is pinned in the project's `.local-designer.json` ("vision": { "url", "model" }), so two analyses of the
-// same image always go through the same model. There is no fallback: a missing model is an error, never another model.
+// Vision: an OPTIONAL local vision-language model (VL) can read the images the skill has to judge.
+// It is set in the project's `.local-designer.json` ("vision": { "url", "model" }) by the user. Without it, or when it
+// does not answer, the agent's current model reads the images itself, silently (see references/vision.md).
+// The tool never picks or writes a model by itself.
 // The server speaks the OpenAI chat API (LM Studio, Ollama /v1, llama.cpp, vLLM, mlx-vlm...). Local by default:
 // an image never leaves the machine unless the user agreed (--allow-remote).
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -82,11 +83,11 @@ export async function listVisionModels(cfg, { fetchFn = globalThis.fetch, allowR
 
 export async function visionStatus(cfg, options = {}) {
   const base = { url: cfg.url, local: isLocalUrl(cfg.url), pinned: cfg.model ?? null, source: cfg.source };
-  if (!cfg.model) return { ...base, status: 'not-pinned', next: 'vision models, then: vision pin --model <id>' };
+  if (!cfg.model) return { ...base, status: 'not-pinned', next: 'Normal state: no local model is set, the current model reads the images. Optional: vision models, then vision pin --model <id>.' };
   try {
     const models = await listVisionModels(cfg, options);
     const found = models.find((m) => m.id === cfg.model);
-    if (!found) return { ...base, status: 'model-missing', error: `The pinned model "${cfg.model}" is not on the server. No other model is used: load it or re-pin.` };
+    if (!found) return { ...base, status: 'model-missing', error: `The local model "${cfg.model}" is not on the server: the current model reads the images instead. Load it or re-pin to use it again.` };
     if (found.type === 'llm') return { ...base, status: 'not-a-vision-model', error: `"${cfg.model}" is a text-only model on this server.` };
     return { ...base, status: 'ok', type: found.type, state: found.state };
   } catch (error) {
@@ -151,7 +152,7 @@ export function parseJsonReply(text) {
 
 // Ask the pinned model about 1 to MAX_IMAGES images.
 export async function askVision(cfg, { images, prompt, system = SYSTEM_PROMPT, maxTokens = 4096, timeout = 300, seed = 42, maxSide, allowRemote = false, fetchFn = globalThis.fetch }) {
-  if (!cfg.model) throw new Error('No vision model is pinned. Run: vision models, then: vision pin --model <id>. The skill never picks one by itself.');
+  if (!cfg.model) throw new Error('No local vision model is set for this project: the current model reads the image itself (vision checks prints the checklist). Optional: vision models, then vision pin --model <id>.');
   assertAllowed(cfg, { allowRemote });
   if (!images?.length) throw new Error('vision needs at least one image');
   if (images.length > MAX_IMAGES) throw new Error(`At most ${MAX_IMAGES} images per question (got ${images.length}).`);
@@ -167,7 +168,7 @@ export async function askVision(cfg, { images, prompt, system = SYSTEM_PROMPT, m
   }
   if (!res.ok) {
     const detail = (await res.text()).slice(0, 300);
-    throw new Error(`The vision model ${cfg.model} refused the request (HTTP ${res.status}): ${detail}. No other model is tried.`);
+    throw new Error(`The local vision model ${cfg.model} refused the request (HTTP ${res.status}): ${detail}. The current model reads the image instead.`);
   }
   const data = await res.json();
   const message = data.choices?.[0]?.message ?? {};

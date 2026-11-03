@@ -2,7 +2,7 @@
 // local-designer: art direction tools plus a connector-based image generation CLI.
 // Zero dependency, Node >= 18.
 // The image engine is a connector (scripts/connectors/): Draw Things today, others can be registered.
-// Commands: status | generate | inspect | styles | sweep | recommend | analyze | match | project-scan | brief | moodboard | charter | character | vision | connectors | migrate
+// Commands: status | generate | inspect | styles | sweep | recommend | analyze | match | project-scan | brief | moodboard | charter | uikit | character | vision | connectors | migrate
 import { existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
@@ -28,6 +28,7 @@ import {
   DEFAULT_CHECKS, askVision, checksFromBrief, listVisionModels, loadVisionConfig, pinVision, reviewPrompt, summariseReview, visionStatus,
 } from './vision-lib.mjs';
 import { applyMigration, planMigration } from './migrate.mjs';
+import { cmdUikit } from './uikit-cli.mjs';
 import {
   auditColours, buildCharter, charterFile, findProjectRoot, loadCharter, outOfSync, registerInIndexes, saveCharter, touch, validateCharter, withStyle,
 } from './charter-lib.mjs';
@@ -585,17 +586,30 @@ function cmdCharacter(opts) {
   throw new Error('Usage: character check|grid|measure|plan|audit ...');
 }
 
-// Vision: every image judgement goes through ONE pinned vision-language model (see references/vision.md).
+// Vision: an optional local vision-language model, otherwise the agent's current model reads (see references/vision.md).
 async function cmdVision(opts) {
   const [sub, ...rest] = opts._;
   const allowRemote = opts['allow-remote'] === true;
   const cfg = loadVisionConfig();
   if (optStr(opts, 'url')) cfg.url = optStr(opts, 'url').replace(/\/+$/, '');
   if (sub === 'status') return { status: 'ok', ...(await visionStatus(cfg, { allowRemote })) };
+  if (sub === 'checks') {
+    // The checklist any reader answers (local model or current model): brief checks first, then the standard ones.
+    let checks = DEFAULT_CHECKS;
+    let context;
+    if (optStr(opts, 'brief')) {
+      const brief = JSON.parse(readFileSync(resolve(optStr(opts, 'brief')), 'utf8'));
+      checks = [...checksFromBrief(brief), ...DEFAULT_CHECKS];
+      context = brief.project ? `images for the project ${brief.project}` : undefined;
+    }
+    if (optStr(opts, 'checks')) checks = optStr(opts, 'checks').split(';').map((s) => s.trim()).filter(Boolean);
+    return { status: 'ok', context: context ?? null, checks, prompt: reviewPrompt(checks, { context }),
+      note: 'Answer each check pass | fail | unclear while looking at the image; never turn unclear into pass.' };
+  }
   if (sub === 'models') {
     const models = await listVisionModels(cfg, { allowRemote });
     return { status: 'ok', url: cfg.url, pinned: cfg.model ?? null, models,
-      note: 'Pick one that reads images (type "vlm" on LM Studio; on other servers, check the model card), then: vision pin --model <id>' };
+      note: 'Optional. To use a local model for every image, pick one that reads images (type "vlm" on LM Studio; on other servers, check the model card), then: vision pin --model <id>' };
   }
   if (sub === 'pin') {
     const model = optStr(opts, 'model');
@@ -631,7 +645,7 @@ async function cmdVision(opts) {
     return { status: 'ok', model: cfg.model, source: cfg.source, url: cfg.url, summary: { images: results.length, ok: count('ok'), to_check: count('to-check'), fail: count('fail'), unparsed: count('unparsed') }, results,
       note: 'A pass is the model\'s reading, not a proof: look at every image that is not "ok", and at the hands and text of the others.' };
   }
-  throw new Error('Usage: vision status|models|pin|ask|review ...');
+  throw new Error('Usage: vision status|models|pin|checks|ask|review ...');
 }
 
 function cmdAnalyze(opts) {
@@ -867,6 +881,15 @@ const USAGE = `Usage: local-designer.mjs <command> [options]
   charter activate --style NAME --by who [--note "..."]   Validate the style: the charter becomes active
   charter note "text" --by who   Add a decision to the log
   charter audit <image|folder>...  Compare the dominant colours of images with the charter palette (verdict per image + summary)
+  uikit init [--primary #hex --accent #hex --neutral #hex] [--css site.css] [--brief f.json] [--fonts "A,B"] [--name N] [--prefix ui] [--force]
+                                   UI kit: seed from options, a stylesheet, the charter or a brief; writes uikit.json + variants.html (A-E compared)
+  uikit variants [--dark]          Rebuild variants.html (the five personalities on the same screen)
+  uikit decide <A-E> --by who      Keep a personality and build the kit (tokens.css, components.css, tokens.vscode.css, icons.svg, showcase.html)
+  uikit set key=value ...          primary, accent, neutral, prefers, fonts, icon_stroke, radius, border, elevation, control, ratio, button, gloss, grain, tint, saturation, display, uppercase, tracking
+  uikit build | check | status     Regenerate the files | contrast of every colour pair in both modes | where the kit stands
+  uikit assets [--only hero,panel] [--no-buttons] [--no-zones] [--quality 90]   Draw webp button skins (9-slice) and zone backgrounds + assets.css (no image model)
+  uikit icons [name] [--size 24]   List the icons, or print one as SVG in the kit's stroke
+  uikit note "text" --by who       Add a remark to the decision log        (all uikit commands: --dir <kit folder>, default <design dir>/uikit)
   character check <spec.json>      Validate a character model sheet (shapes in head units: 1 = height of the head)
   character grid <image.png> [--step 32] [--out f.png]   Numbered grid over a reference, to read landmarks by eye
   character measure <landmarks.json>   Pixels read on a reference -> positions and widths in head units
@@ -874,11 +897,13 @@ const USAGE = `Usage: local-designer.mjs <command> [options]
                                    Flat plan drawn from the sheet: the start image for generate --init (strength ~0.75)
   character audit <spec.json> <image.png> [--view front] [--tolerance 0.15] [--rows]
                                    Width of the head, shoulders/arms and trousers vs the sheet: on-model | off-model
- vision status | models         The ONE vision-language model pinned for this project (.local-designer.json "vision") and the server's models
- vision pin --model <id> [--url http://127.0.0.1:1234/v1] [--force]   Pin it (committed with the project; never chosen by the tool)
- vision ask <image>... --prompt "..." [--max-tokens 4096] [--max-side 1024] [--timeout 300]   Ask the pinned model about 1-4 images
+ vision status | models         The OPTIONAL local vision-language model of this project (.local-designer.json "vision") and the server's models
+                                Without it the current model reads the images itself (not-pinned is a normal state)
+ vision pin --model <id> [--url http://127.0.0.1:1234/v1] [--force]   Set it (committed with the project; never chosen by the tool)
+ vision checks [--brief f.json] [--checks "a;b"]   Print the checklist (and its prompt) any reader answers, local model or not
+ vision ask <image>... --prompt "..." [--max-tokens 4096] [--max-side 1024] [--timeout 300]   Ask the local model about 1-4 images
  vision review <image>... [--brief f.json] [--checks "a;b"] [--context "..."]   Checklist per image: ok | to-check | fail
-          Local server only; --allow-remote after the user agreed. No fallback to another model.
+          Local server only; --allow-remote after the user agreed.
   generate --charter [file] --prompt "subject" ...   Lock: refuses to run until the charter is active; uses its style and negative
   inspect <image.png>            Print the prompt and parameters stored in a PNG by any registered engine
 Common: --connector <id> (or env LOCAL_DESIGNER_CONNECTOR, default: first engine that answers)
@@ -902,6 +927,7 @@ async function main() {
     else if (command === 'brief') result = cmdBrief(opts);
     else if (command === 'moodboard') result = await cmdMoodboard(opts);
     else if (command === 'charter') result = cmdCharter(opts);
+    else if (command === 'uikit') result = cmdUikit(opts);
     else if (command === 'character') result = cmdCharacter(opts);
     else if (command === 'vision') result = await cmdVision(opts);
     else if (command === 'connectors') result = await cmdConnectors(opts);

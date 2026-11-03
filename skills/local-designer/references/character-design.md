@@ -8,8 +8,8 @@ the model no measure: it draws a different body each time. Numbers, an order of 
 If the user gives a reference image, measure it before writing anything. Looking at it and writing "the head is half
 of the height" is the usual mistake: on the Kido reference the measured head was 28 percent, not 50.
 
-1. Open the image at its real size. Crop and enlarge three zones (head, torso with arms, legs with feet) and have the image analyst read each
-   one (`vision ask zone.png --prompt "..."`, one precise question per zone: [`vision.md`](vision.md)). The measures below stay yours; the reading of the pixels is not.
+1. Open the image at its real size. Crop and enlarge three zones (head, torso with arms, legs with feet) and read each
+   one with the image analyst method (one precise question per zone: [`vision.md`](vision.md)). The measures below come from the tools; the reading of the pixels comes from the reader.
 2. Overlay a grid every 32 px (a PNG helper is in `scripts/png.mjs`: `decodePng`, `encodePng`) and read the rows on the image.
 3. Take the head height as the unit. Write down, in head units:
    - total height (for example 3.5 heads);
