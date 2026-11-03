@@ -348,3 +348,68 @@ test('zones: a closed list, each one documented', () => {
   assert.ok(ZONE_NAMES.includes('hero') && ZONE_NAMES.includes('panel'));
   assert.ok(ZONE_NAMES.length >= 4);
 });
+
+// ---------------------------------------------------------------------------
+// The palette that is given is the palette that is used, and the link stays visible
+// ---------------------------------------------------------------------------
+
+const PALETTE = [
+  { hex: '#0e386e', role: 'primary', name: 'navy' }, { hex: '#b85c38', role: 'accent', name: 'terracotta' },
+  { hex: '#c9a57b', role: 'secondary' }, { hex: '#f8dbb2', role: 'secondary' }, { hex: '#a8b89a', role: 'secondary' },
+  { hex: '#e9b8b8', role: 'secondary' }, { hex: '#3d4e6b', role: 'secondary' }, { hex: '#727058', role: 'secondary' },
+  { hex: '#f6efe0', role: 'neutral' }, { hex: '#111524', role: 'neutral' },
+];
+
+test('palette: neutrals and secondaries are used as given, and every token says where it comes from', () => {
+  const { seed: s } = seedFrom({ charter: { brand: { palette: PALETTE, fonts: [] } } });
+  assert.equal(s.neutral, '#f6efe0');
+  assert.equal(s.ink, '#111524');
+  assert.equal(s.palette.length, PALETTE.length);
+  const t = buildTokens({ seed: s, variant: 'A' });
+  assert.equal(t.modes.light.bg, '#f6efe0');
+  assert.equal(t.modes.light.text, '#111524');
+  assert.equal(t.modes.dark.bg, '#111524');
+  assert.equal(t.modes.dark.text, '#f6efe0');
+  assert.equal(t.modes.light.primary, '#0e386e');
+  assert.equal(t.modes.light.accent, '#b85c38');
+  const palette = new Set(PALETTE.map((c) => c.hex));
+  for (const mode of ['light', 'dark']) {
+    assert.deepEqual(Object.keys(t.trace[mode]).sort(), Object.keys(t.modes[mode]).filter((k) => !k.startsWith('shadow')).sort(), `${mode}: one trace per colour`);
+    for (const [token, tr] of Object.entries(t.trace[mode])) {
+      assert.equal(tr.to, t.modes[mode][token].toLowerCase(), `${mode}.${token} arrival matches the token`);
+      assert.ok(['palette', 'adjusted', 'mixed', 'derived', 'generated'].includes(tr.how), `${mode}.${token}: ${tr.how}`);
+      for (const from of tr.from) assert.ok(palette.has(from) || /^#[0-9a-f]{6}$/.test(from), `${mode}.${token} starts from ${from}`);
+      if (tr.how === 'palette') assert.ok(palette.has(tr.to), `${mode}.${token} is "palette" so ${tr.to} must be in the palette`);
+      if (tr.how === 'adjusted') assert.ok(tr.why, `${mode}.${token} was moved: it must say why`);
+    }
+  }
+  // At least the borders and the muted text come from the palette itself, not from a computed grey.
+  assert.ok(palette.has(t.modes.light.border) && palette.has(t.modes.light['text-muted']) && palette.has(t.modes.dark['text-muted']));
+  assert.ok(checkTokens(t).ok);
+});
+
+test('palette: a colour moved for contrast is reported as adjusted, with the original as its starting point', () => {
+  const { seed: s } = seedFrom({ charter: { brand: { palette: PALETTE, fonts: [] } } });
+  const t = buildTokens({ seed: s, variant: 'A' });
+  const dark = t.trace.dark.primary;
+  assert.equal(dark.how, 'adjusted');
+  assert.deepEqual(dark.from, ['#0e386e']);
+  assert.notEqual(dark.to, '#0e386e');
+  assert.match(dark.why, /sombre/);
+});
+
+test('palette: the review pages show the palette and the start -> arrival link', () => {
+  const { seed: s } = seedFrom({ charter: { brand: { palette: PALETTE, fonts: [] } } });
+  const html = showcaseHtml(buildTokens({ seed: s, variant: 'A', name: 'demo' }));
+  assert.match(html, /Palette fournie et couleurs du kit/);
+  for (const c of PALETTE) assert.ok(html.includes(c.hex), `${c.hex} is displayed`);
+  assert.match(html, /départ \(palette\)/);
+  assert.match(html, /ajustée/);
+  assert.match(variantsHtml(s, { name: 'demo' }), /Palette fournie et couleurs du kit/);
+});
+
+test('palette: without a palette the kit still builds and says the colours are generated', () => {
+  const t = buildTokens({ seed: { primary: '#3b5bdb', accent: '#0ca678', neutral: null, ink: null, palette: [], prefers: 'light', fonts: [] }, variant: 'A' });
+  assert.ok(checkTokens(t).ok);
+  assert.equal(t.trace.light.bg.how, 'generated');
+});

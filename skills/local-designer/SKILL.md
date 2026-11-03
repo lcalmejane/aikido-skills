@@ -119,7 +119,7 @@ A direction is shown **in situation**, not as one picture: the same scenes rende
    `--trial` renders every scene (3 directions x 4 scenes = 12 renders, about 7 minutes locally), as webp.
    Trials are small (8 steps): they show the **spirit**, not the detail, and a scene's precise instructions are often not followed
    (wrong object, missing item). Look at each one, say what is off, and re-run `moodboard trial <dir> --track B --scene geste` before sending.
-3. Show `moodboard.html` (one file, images embedded, no script, no link) to the client and wait for the answer. Preview in this order
+3. Show `moodboard.html` (one file, images embedded, no script, no link) to the client and wait for the answer. The page has an Auto / Light / Dark switch at the top (radio buttons and CSS only, so it still works by e-mail): it changes the page and the page mock-ups, never the generated images. Judge a direction in both versions before validating it. Preview in this order
    ([`references/preview.md`](references/preview.md)): 1) the agent CLI / LLM host itself, if it can display HTML or images; 2) the IDE built-in
    browser (VS Code and forks), served on `127.0.0.1` if `file://` is refused; 3) only then an external browser (`open`, `xdg-open`, `start`).
 4. `moodboard decide <dir> --track B --state validated --by "Name"`: one validated direction at a time; the page is rebuilt with the state and comments.

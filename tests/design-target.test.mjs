@@ -204,3 +204,46 @@ test('summary counts the renders per direction', () => {
   assert.deepEqual(s.scenes, ['hero', 'detail']);
   assert.deepEqual(s.tracks.map((t) => [t.id, t.renders, t.expected]), [['A', 1, 2], ['B', 0, 2]]);
 });
+
+test('the page can be read light or dark with a switch that needs no script', () => {
+  const board = buildMoodboard(styles, brief, { only: ['watercolor', 'pixel-art'] });
+  const dir = tmp();
+  const tiny = Buffer.from('UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==', 'base64');
+  const images = {};
+  for (const t of board.tracks) {
+    const file = join(dir, `${t.id}-hero.webp`);
+    writeFileSync(file, tiny);
+    images[t.id] = { hero: file, detail: null };
+  }
+  const html = renderMoodboardHtml(board, {}, images);
+  // Three choices, Auto first and selected, made of radio buttons: no JavaScript.
+  assert.match(html, /<input type="radio" name="mode" id="m-auto" checked>/);
+  assert.ok(html.includes('id="m-light"') && html.includes('id="m-dark"'));
+  assert.ok(html.includes('Affichage') && html.includes('Clair') && html.includes('Sombre') && html.includes('Auto'));
+  assert.ok(!/<script/i.test(html) && !/https?:\/\//i.test(html) && !/\bon(click|change)=/i.test(html), 'still self-contained');
+  // The dark set applies when "Dark" is checked, or when "Auto" is checked and the system is dark.
+  assert.ok(html.includes(':root:has(#m-dark:checked)'));
+  assert.match(html, /@media \(prefers-color-scheme:dark\)\{:root:has\(#m-auto:checked\)/);
+  // Every track has both previews; the dark one is hidden until the dark mode is on.
+  for (const t of board.tracks) assert.ok(t.id);
+  assert.equal((html.match(/class="page pv-l"/g) ?? []).length, board.tracks.length);
+  assert.equal((html.match(/class="page pv-d"/g) ?? []).length, board.tracks.length);
+  assert.match(html, /\.pv-d\{display:none\}/);
+  // The hero image is embedded once per track (custom property), not once per preview.
+  assert.equal((html.match(/--hero:url\('data:image\/webp/g) ?? []).length, board.tracks.length);
+  assert.equal((html.match(/data:image\/webp;base64,/g) ?? []).length, board.tracks.length * 2, 'one in the gallery, one as the hero');
+  // The two previews really differ: the dark one starts from the dark base of the palette.
+  const c = previewColours(board.tracks[0].palette);
+  assert.ok(html.includes(`background:${c.dark};color:${c.light}`) || html.includes(`${c.dark}f0`), 'dark preview built on the dark base');
+  // English labels too.
+  const en = renderMoodboardHtml({ ...board, brief: { ...board.brief, language: 'en' } }, {}, {});
+  assert.ok(en.includes('Display') && en.includes('Light') && en.includes('Dark'));
+});
+
+test('the dark title colour of a page preview stays readable on the dark base', () => {
+  const c = previewColours([{ hex: '#0e386e', role: 'primary' }, { hex: '#b85c38', role: 'accent' }, { hex: '#f6efe0', role: 'neutral' }, { hex: '#111524', role: 'neutral' }]);
+  assert.equal(c.dark, '#111524');
+  assert.notEqual(c.titleOnDark, '#0e386e', 'a navy title would vanish on a near-black page');
+  assert.equal(c.titleOnDark, '#b85c38', 'the accent is used when the main colour is too dark');
+  assert.equal(previewColours([{ hex: '#f4efe6', role: 'neutral' }, { hex: '#1d1d1f', role: 'neutral' }]).titleOnDark, '#f4efe6');
+});

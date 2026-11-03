@@ -96,6 +96,44 @@ function contrastTable(tokens) {
     + (bad.length ? `<table class="rv-table"><tr><th>mode</th><th>texte/élément</th><th>fond</th><th>ratio</th><th>min</th><th></th></tr>${rows}</table>` : '') + '</section>';
 }
 
+const HOW = {
+  palette: ['telle quelle', '#1b7f4b'],
+  adjusted: ['ajustée', '#a15c00'],
+  mixed: ['mélange', '#3b5bdb'],
+  derived: ['dérivée', '#5b6578'],
+  generated: ['hors palette', '#9a3412'],
+};
+const chip = (hex, size = 18) => `<span style="display:inline-block;width:${size}px;height:${size}px;border-radius:4px;background:${esc(hex)};border:1px solid #8886;vertical-align:middle"></span>`;
+
+// The palette that was given, then, per mode, every colour of the kit with where it comes from: start (palette) -> arrival (kit).
+// Plain inline styles, no kit variables: this is a review page about the kit, not a themed sample.
+function paletteSection(tokens) {
+  const palette = tokens.palette ?? [];
+  const used = (hex) => {
+    const hits = MODES.flatMap((m) => Object.values(tokens.trace?.[m] ?? {})).filter((t) => t.from.includes(hex));
+    if (!hits.length) return ['non utilisée', '#9a3412'];
+    if (hits.some((t) => t.how === 'palette' && t.to === hex)) return ['utilisée telle quelle', '#1b7f4b'];
+    return ['point de départ, ajustée', '#a15c00'];
+  };
+  const swatches = palette.length
+    ? palette.map((c) => { const [label, color] = used(c.hex); return `<div style="display:grid;gap:3px;justify-items:center;width:104px;text-align:center"><div style="width:72px;height:72px;border-radius:10px;background:${esc(c.hex)};border:1px solid #8886"></div><code>${esc(c.hex)}</code><span>${esc(c.role)}${c.name ? ` · ${esc(c.name)}` : ''}</span><b style="color:${color};font-size:11px">${label}</b></div>`; }).join('')
+    : '<p>Aucune palette fournie : le kit part des couleurs principale et d\'accent seules, le reste est généré.</p>';
+  const tables = MODES.map((m) => {
+    const rows = Object.entries(tokens.trace?.[m] ?? {}).map(([token, t]) => {
+      const [label, color] = HOW[t.how] ?? [t.how, '#555'];
+      const from = t.from.length ? t.from.map((h) => `${chip(h)} <code>${esc(h)}</code>`).join(' + ') : '—';
+      return `<tr><td><code>${esc(token)}</code></td><td>${from}</td><td>→</td><td>${chip(t.to)} <code>${esc(t.to)}</code></td><td style="color:${color};font-weight:700">${label}</td><td>${esc(t.why ?? '')}</td></tr>`;
+    }).join('');
+    return `<details style="margin:.5rem 0"><summary style="cursor:pointer;font-weight:700">Mode ${m === 'light' ? 'clair' : 'sombre'} : d'où vient chaque couleur</summary><table class="rv-table"><tr><th>jeton</th><th>départ (palette)</th><th></th><th>arrivée (kit)</th><th>nature</th><th>pourquoi</th></tr>${rows}</table></details>`;
+  }).join('');
+  const count = (how) => MODES.flatMap((m) => Object.values(tokens.trace?.[m] ?? {})).filter((t) => t.how === how).length;
+  const total = MODES.flatMap((m) => Object.keys(tokens.trace?.[m] ?? {})).length;
+  const summary = Object.keys(HOW).map((k) => `<span style="color:${HOW[k][1]};font-weight:700">${count(k)} ${HOW[k][0]}</span>`).join(' · ');
+  return `<section style="font-family:system-ui,sans-serif;padding:0 1.25rem"><h2>Palette fournie et couleurs du kit</h2>`
+    + `<p>Palette reçue en entrée (charte, brief ou options), puis ce qu'en fait le kit. Une couleur peut être changée pour le contraste ou la cohérence : le départ et l'arrivée restent visibles ci-dessous. ${total} couleurs : ${summary}.</p>`
+    + `<div style="display:flex;flex-wrap:wrap;gap:1rem;margin:1rem 0">${swatches}</div>${tables}</section>`;
+}
+
 const retag = (html, p) => (p === 'ui' ? html : html.replace(/\bui-/g, `${p}-`));
 
 export function showcaseHtml(tokens, { assetsHref = null } = {}) {
@@ -103,7 +141,7 @@ export function showcaseHtml(tokens, { assetsHref = null } = {}) {
   const css = `${tokensCss(tokens)}\n${componentsCss(tokens)}\n${PAGE_CSS}`;
   const panes = MODES.map((m) => `<div class="ui-root" data-theme="${m}"><p class="ui-muted" style="margin:0 0 1rem"><b>Mode ${m === 'light' ? 'clair' : 'sombre'}</b></p>${sampleBody(tokens, { dark: m === 'dark' })}</div>`).join('');
   const body = `<div class="rv-bar"><b>${esc(tokens.name)} · UI kit</b><span>Variante ${esc(tokens.variant.id)} · ${esc(tokens.variant.label)}</span><span>${ICON_NAMES.length} pictos</span><span>Page générée, ne pas la modifier : ajustez avec <code>uikit set clé=valeur</code>, elle est reconstruite à chaque <code>uikit build</code></span></div>`
-    + inlineSprite(tokens) + `<div class="rv-pair">${retag(panes, p)}</div>` + contrastTable(tokens);
+    + inlineSprite(tokens) + paletteSection(tokens) + `<div class="rv-pair">${retag(panes, p)}</div>` + contrastTable(tokens);
   return `<!doctype html>\n<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(tokens.name)} — UI kit</title>`
     + `<style>${css}</style>${assetsHref ? `<link rel="stylesheet" href="${esc(assetsHref)}">` : ''}</head><body>${body}</body></html>\n`;
 }
@@ -122,6 +160,7 @@ export function variantsHtml(seed, { name = 'kit', prefix = 'ui', overrides = {}
   return `<!doctype html>\n<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(name)} — pistes de UI kit</title>`
     + `<style>${PAGE_CSS}.rv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,34rem),1fr));gap:1.5rem;padding:1.25rem;font-family:system-ui,sans-serif}</style></head><body>`
     + `<div class="rv-bar"><b>${esc(name)} · cinq pistes de UI kit</b><span>Même écran, mêmes couleurs de marque, cinq personnalités. Choisir avec <code>uikit decide &lt;A-E&gt;</code>.</span><span>${dark ? 'mode sombre' : 'mode clair'}</span></div>`
+    + paletteSection(buildTokens({ seed, variant: variantIds()[0], overrides, name, prefix }))
     + `<div class="rv-grid">${frames}</div></body></html>\n`;
 }
 

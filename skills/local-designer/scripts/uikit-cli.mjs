@@ -98,7 +98,7 @@ function cmdInit(opts, dir) {
   const briefFile = str(opts, 'brief');
   const brief = briefFile ? JSON.parse(readFileSync(resolve(briefFile), 'utf8')) : null;
   const charter = opts['no-charter'] ? null : tryCharter(opts);
-  const { seed, sources, hints } = seedFrom({ colors: { primary: str(opts, 'primary'), accent: str(opts, 'accent'), neutral: str(opts, 'neutral') }, css, charter, brief, prefers: str(opts, 'prefers') });
+  const { seed, sources, hints } = seedFrom({ colors: { primary: str(opts, 'primary'), accent: str(opts, 'accent'), neutral: str(opts, 'neutral'), ink: str(opts, 'ink') }, css, charter, brief, prefers: str(opts, 'prefers') });
   if (str(opts, 'fonts')) seed.fonts = str(opts, 'fonts').split(',').map((s) => s.trim()).filter(Boolean);
   const errors = validateSeed(seed);
   if (errors.length) throw new Error(errors.join('; '));

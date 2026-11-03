@@ -87,7 +87,11 @@ export function onColor(bg, light = '#ffffff', dark = '#0b0d14') {
 }
 
 // Adjusts `fill` so that the readable `on` colour reaches `min` on it, moving the fill as little as possible.
-export function fillFor(fill, min = 4.5) {
+// `labels` are preferred label colours (the brand's own light and dark neutrals): they are used as they are when they read
+// well enough, the generic white / near-black only otherwise, and the fill itself is moved only as a last resort.
+export function fillFor(fill, min = 4.5, labels = []) {
+  const preferred = labels.filter(Boolean).filter((l) => contrast(l, fill) >= min).sort((a, b) => contrast(b, fill) - contrast(a, fill))[0];
+  if (preferred) return { fill: toHex(rgbOf(fill)), on: preferred };
   let on = onColor(fill);
   if (contrast(on, fill) >= min) return { fill: toHex(rgbOf(fill)), on };
   const [h, s, l] = rgbToHsl(fill);
