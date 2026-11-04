@@ -82,7 +82,10 @@ node scripts/local-designer.mjs vision review final.png --checks "The robot has 
 `review` returns, per image, `verdict`: `ok` (every check passes), `to-check` (at least one is `unclear`), `fail`,
 or `unparsed` (the model did not answer in JSON; the raw start of its answer is kept). The summary counts them.
 It asks the standard checks after the brief's own: no text or logo, right hands, no duplicated or fused part, subject
-inside the frame, no melted area. When the current model reads, it answers the same list and gives the same verdicts.
+inside the frame, no melted area, distinct generic human faces and casting matched to
+the brief and audience ([people and casting](people-and-casting.md)). Explicit clone
+concepts and designed-character model sheets are exempt from distinctness, not anatomy
+checks. When the current model reads, it answers the same list and gives the same verdicts.
 
 Options: `--max-side 1024` (raise to 1536 for small details), `--max-tokens 4096` (a reasoning model needs room), `--timeout 300`
 seconds, `--seed 42`, `--url`, `--allow-remote`.

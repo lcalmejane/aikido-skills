@@ -22,6 +22,15 @@ repositories from which compatible skills can be imported.
 
 ## Use
 
+Local Designer inspects local tools and known loopback engines with `discover`.
+Its `setup` command verifies and saves the connector, endpoint and optional model
+in the consuming project's `.local-designer.json`; scripts reuse those settings
+at each use, and upgrades preserve them. See its
+[runtime configuration](skills/local-designer/references/runtime-configuration.md).
+Generic people follow the [casting rules](skills/local-designer/references/people-and-casting.md):
+distinct faces and varied casting by default, configurable through the brief,
+without changing designed characters.
+
 Point `GIT_GROUP` in `prompts/hard_points/configuration/skills.cfg` at this
 repository, then:
 

@@ -11,11 +11,23 @@ Normally applied by `/skill-manage get --skill local-designer`, which copies the
 
 ## Prerequisites
 
-- macOS with the Draw Things app (API Server enabled: HTTP, port 7860) for any generation
+- macOS with the Draw Things app (API Server enabled: gRPC recommended, port 7860; HTTP also supported) for any generation
 - Node.js 18+ (no npm dependency); `cwebp` for WebP and thumbnails; ImageMagick or `sips` for image analysis
 - The skill in `prompts/hard_points/system/local-designer/`
 
 Browsing, `recommend`, `brief` and `moodboard build` without `--trial` work without Draw Things.
+
+## Initialize the local engine
+
+From the consuming project's root, follow
+[local engine configuration](references/runtime-configuration.md): run `discover`,
+confirm the detected engine, then `setup` to save its verified connector, endpoint
+and optionally confirmed model in `.local-designer.json`. Keep the project settings
+outside the installed skill directory, preserving `design_dir`, `vision` and other
+keys. If the server is stopped, report it and finish the offline installation
+without writing guessed engine settings; run setup once the server is available.
+On upgrades, preserve existing configuration. A user-supplied new port/protocol
+or model is updated through `setup` after verification, not by patching defaults.
 
 ## Files to Update
 
@@ -135,6 +147,8 @@ The reader is chosen silently: the local model set for the project if any, other
 ## Verification
 
 ```bash
+node prompts/hard_points/system/local-designer/scripts/local-designer.mjs discover
+node prompts/hard_points/system/local-designer/scripts/local-designer.mjs status
 node prompts/hard_points/system/local-designer/scripts/local-designer.mjs styles validate
 node prompts/hard_points/system/local-designer/scripts/local-designer.mjs recommend --brief "technical diagram for a proposal"
 node prompts/hard_points/system/local-designer/scripts/local-designer.mjs vision status

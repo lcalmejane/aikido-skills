@@ -12,11 +12,16 @@ export const isLoopback = (host) => ['127.0.0.1', 'localhost', '::1', '[::1]'].i
 
 const normalizeFingerprint = (text) => String(text).replace(/[^0-9a-f]/gi, '').toLowerCase();
 
-export function parseTarget(text, fallback = '127.0.0.1:7859') {
+export const DEFAULT_PORT = 7860;
+export const DEFAULT_TARGET = `127.0.0.1:${DEFAULT_PORT}`;
+
+export function parseTarget(text, fallback = DEFAULT_TARGET) {
   const s = String(text || fallback).replace(/^grpcs?:\/\//, '').replace(/\/+$/, '');
   const m = /^(\[[^\]]+\]|[^:]+)(?::(\d+))?$/.exec(s);
   if (!m) throw new Error(`Invalid gRPC address "${text}" (expected host:port)`);
-  return { host: m[1].replace(/^\[|\]$/g, ''), port: Number(m[2] ?? 7859) };
+  const port = Number(m[2] ?? DEFAULT_PORT);
+  if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error(`Invalid gRPC port "${m[2]}" (expected 1..65535)`);
+  return { host: m[1].replace(/^\[|\]$/g, ''), port };
 }
 
 const GRPC_STATUS = {

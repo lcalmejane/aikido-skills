@@ -1,6 +1,6 @@
 ---
 name: aikido-design-render
-description: Generate images with Draw Things (local or remote): drafts, tuning sweeps and the final render behind the validation lock
+description: "Generate images with Draw Things (local or remote): drafts, tuning sweeps and the final render behind the validation lock"
 category: local-designer
 ---
 
@@ -8,13 +8,15 @@ category: local-designer
 
 ## Description
 
-Drives Draw Things through its HTTP API. For a client project the final render only runs once a mood board
+Drives Draw Things through its configured HTTP or gRPC connector. For a client project the final render only runs once a mood board
 direction is validated; for a personal or exploratory image it can run with a chosen style.
 
 ## Usage
 
 ```
 /aikido-design-render status [--url http://host:7860]
+/aikido-design-render discover
+/aikido-design-render setup --connector drawthing-grpc --grpc 127.0.0.1:7860
 /aikido-design-render draft  --subject "..." [--style name] [--moodboard <dir>]
 /aikido-design-render sweep  --subject "..." --styles a,b,c [--seeds 1,2] [--vary guidance=3,5]
 /aikido-design-render final  --moodboard <dir> --out <file.png> | --style name --prompt "..." --out <file.png>
@@ -24,7 +26,10 @@ direction is validated; for a personal or exploratory image it can run with a ch
 
 `<skill-dir>` is the folder holding `SKILL.md`. Read `references/parameters.md` before changing a parameter.
 
-1. **status**: `node <skill-dir>/scripts/local-designer.mjs status`. Note the model and `where`. Remote or cloud: read
+1. **Configuration and status**: follow [local engine configuration](../references/runtime-configuration.md).
+   Map **discover** / **setup** to the CLI commands of the same name; inspect the
+   machine, verify and persist user-supplied settings, preserving project keys.
+   Then run `node <skill-dir>/scripts/local-designer.mjs status`. Note the model and `where`. Remote or cloud: read
    `references/local-and-cloud.md` and get the user's agreement first.
 2. **draft**: always `--dry-run` first, then small (`--width 512 --height 512 --steps 8`).
 3. **sweep**: one subject and one seed across styles, then one parameter at a time (`--vary`). Results go to

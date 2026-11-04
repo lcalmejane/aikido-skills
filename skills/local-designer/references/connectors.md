@@ -7,20 +7,24 @@ into the engine's own call and brings the PNG back.
 | Connector | Id | Status | Engine |
 |---|---|---|---|
 | Draw Things (HTTP) | `drawthing` | Available, tested locally | macOS app, A1111-compatible HTTP API (`/sdapi/v1/*`, port 7860) |
-| Draw Things (gRPC) | `drawthing-grpc` | Available, tested locally on a real server | Same app or a server offload, port 7859, TLS: see [`grpc.md`](grpc.md) |
+| Draw Things (gRPC) | `drawthing-grpc` | Available, tested locally on a real server | Same app or a server offload, port 7860, TLS: see [`grpc.md`](grpc.md) |
 | ComfyUI | `comfyui` | Not written | Needs a workflow template: see [Adding a connector](#adding-a-connector) |
 
 ## Choosing the engine
 
 1. `--connector <id>` on the command line.
 2. `$LOCAL_DESIGNER_CONNECTOR`.
-3. Otherwise **auto**: with several connectors registered, each one's `detect()` is tried in registration order
+3. Explicit `--grpc` / `--url`, then endpoint environment variables select their protocol.
+4. The verified project engine in `.local-designer.json`, initialized/updated with
+   `discover` and `setup`: see [local engine configuration](runtime-configuration.md).
+5. Otherwise **auto**: with several connectors registered, each one's `detect()` is tried in registration order
    (`drawthing`, then `drawthing-grpc`) and the first that answers wins. If none answers, the default (`drawthing`)
    is used so the user sees its usual "not reachable" hint. A machine with the HTTP server off and the gRPC server
    on therefore lands on gRPC without any option.
 
 `connectors` lists what is registered, what each one supports and which one answers right now.
 `status` and every `generate`/`sweep` result name the connector that was used (`"connector": "drawthing"`).
+Once configured, an unreachable engine fails rather than silently switching engines.
 
 ## What does not depend on the engine
 
@@ -75,7 +79,7 @@ workflow that works there.
 
 ## Draw Things gRPC connector
 
-Full reference in [`grpc.md`](grpc.md). In short: server `--grpc host:port` (default `127.0.0.1:7859`), the server's
+Full reference in [`grpc.md`](grpc.md). In short: server `--grpc host:port` (default `127.0.0.1:7860`), the server's
 real model and LoRA lists, progress events, TLS with a certificate fingerprint for any non-local host, shared secret
 from a file or `DRAWTHING_SECRET`, compressed images decoded on the client side. Its code lives in
 `scripts/connectors/drawthing-grpc/`.

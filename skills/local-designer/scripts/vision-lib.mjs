@@ -193,6 +193,8 @@ export const DEFAULT_CHECKS = [
   'There is no readable text, letters, numbers, logo or watermark in the image',
   'Hands show the right number of fingers and look natural',
   'No limb, eye or object is duplicated, fused or cut off by mistake',
+  'When generic humans appear, each has a distinct face and appearance rather than a cloned face; exempt only explicitly requested clones or repeated views of a designed character',
+  'When generic humans appear, their visible casting matches the brief and audience, with varied gender presentation and adult ages by default across groups or a series; do not infer identity or origin from appearance, and preserve designed character identities',
   'The main subject is entirely inside the frame',
   'No visible artefact: melted shapes, smeared areas, stray marks',
 ];

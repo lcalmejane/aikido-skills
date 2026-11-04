@@ -1,6 +1,6 @@
 ---
 name: local-designer
-description: Local image design for agents: art direction, client brief and mood board with a validation lock before generation, a UI kit (design tokens in light and dark, standard components, icons, button and zone images) with five personalities to choose from, 29 reusable render styles with thumbnails, style recommendation from a brief, an image or a project folder, sweeps with a contact sheet kept outside git, and a parameter knowledge base. Generation goes through a connector; two are available for Draw Things (macOS app): the HTTP API and gRPC, which lists the server's real models and reaches a local, remote or offload server.
+description: "Local image design for agents: art direction, client brief and mood board with a validation lock before generation, a UI kit (design tokens in light and dark, standard components, icons, button and zone images) with five personalities to choose from, 29 reusable render styles with thumbnails, style recommendation from a brief, an image or a project folder, sweeps with a contact sheet kept outside git, and a parameter knowledge base. Generation goes through a connector; two are available for Draw Things (macOS app): the HTTP API and gRPC, which lists the server's real models and reaches a local, remote or offload server."
 ---
 
 # Local Designer Skill
@@ -19,7 +19,7 @@ Image generation is done by a connector, the engine installed on the machine. Ea
 | Connector | Id | Status | Notes |
 |---|---|---|---|
 | **Draw Things** (macOS app, A1111-compatible HTTP API `/sdapi/v1/*`) | `drawthing` | Available, tested locally | `DRAWTHING_URL` / `--url` select the server. Model names must be copied from the app |
-| **Draw Things gRPC** (same app, server offload) | `drawthing-grpc` | Available, tested on a real server | `--grpc host:port` (default `127.0.0.1:7859`). Lists the server's models and LoRA, shows progress, TLS with fingerprint. Prefer it when enabled: [`references/grpc.md`](references/grpc.md) |
+| **Draw Things gRPC** (same app, server offload) | `drawthing-grpc` | Available, tested on a real server | `--grpc host:port` (default `127.0.0.1:7860`). Lists the server's models and LoRA, shows progress, TLS with fingerprint. Prefer it when enabled: [`references/grpc.md`](references/grpc.md) |
 | ComfyUI | `comfyui` | Not written | Needs a workflow template tied to the user's install: see [`references/connectors.md`](references/connectors.md) |
 
 Pick one with `--connector <id>` or `LOCAL_DESIGNER_CONNECTOR`; otherwise the first one that answers is used.
@@ -29,18 +29,23 @@ The contract and how to add a connector are in [`references/connectors.md`](refe
 
 ## Metadata
 - **Name**: local-designer
-- **Version**: 5.3.0
+- **Version**: 5.4.0
 - **Category**: generation
 - **Requires**: Node.js 18+, `cwebp` (WebP export, thumbnails), ImageMagick or `sips` (image analysis). For generation with the Draw Things connector: macOS and the app with its API server enabled
 
 ## Prerequisite (user action, once per session)
-In Draw Things, open the advanced settings, enable **API Server**, protocol **gRPC** (port **7859**, recommended)
+In Draw Things, open the advanced settings, enable **API Server**, protocol **gRPC** (port **7860**, recommended)
 or **HTTP** (port **7860**). Keep the app open. Then:
 
 ```bash
 node scripts/local-designer.mjs status          # model and settings in use, local/remote
 node scripts/local-designer.mjs status --full   # every setting the app exposes
 ```
+At installation or first use, run `discover`, then `setup` to verify and save
+the chosen engine in the project's `.local-designer.json`. At each use scripts
+read those settings; a port or model supplied during an exchange is updated
+through `setup`, not hard-coded into a script. Preserve this configuration
+during skill upgrades. See [local engine configuration](references/runtime-configuration.md).
 All `node scripts/...` examples run from the skill folder (`<skill-dir>`: where this `SKILL.md` lives, e.g.
 `prompts/hard_points/system/local-designer/` once installed). From elsewhere, use `node <skill-dir>/scripts/local-designer.mjs`.
 
@@ -52,6 +57,8 @@ anything that leaves the machine needs the user's agreement.
 
 | Command | Purpose |
 |---|---|
+| `discover` | Read-only machine/tool inspection and bounded loopback engine discovery |
+| `setup [--connector id --grpc host:port] [--model file]` | Verify and persist local engine settings, preserving the project's other configuration |
 | `status [--full]` | Check the engine, show the connector used, its current model/settings and whether the target is local or remote |
 | `connectors` | List the registered engines, what each supports and which one answers |
 | `migrate [--dry-run]` | Move data kept under the former name (`~/drawthing-lab`, `~/.drawthing`) to `~/local-designer-lab`, `~/.local-designer` and fix the paths inside |
@@ -178,7 +185,16 @@ validates a visual language) and [`agents/agent-aikido-image-analyst.md`](agents
 Install into an AI-KIDO project: [`install-aikido.md`](install-aikido.md) (or `/skill-manage get --skill local-designer`).
 
 ## Instructions
-1. Run `status`. Note the model and `where` (local/remote). If not local, follow `references/local-and-cloud.md`.
+For generic humans, apply [people and casting](references/people-and-casting.md):
+distinct faces by default, varied gender presentation and adult ages across groups
+and series, casting configurable through the audience and existing brief/charter
+constraints. Keep character-design identities unchanged; clones require an explicit
+request. Write the cast into the prompt and reject accidental lookalikes on review.
+
+1. Follow [local engine configuration](references/runtime-configuration.md). If
+   unconfigured, inspect with `discover` and initialize with `setup`; update through
+   `setup` when the user gives new settings. Run `status`, note the model and
+   `where` (local/remote). If not local, follow `references/local-and-cloud.md`.
 2. **Choose the look first.** Read [`references/art-direction.md`](references/art-direction.md) or load the
    [`agent-aikido-art-director`](agents/agent-aikido-art-director.md) agent. From a brief: `recommend`; from an image: `analyze` / `match`; from a
    project: `project-scan`. For a client project, build a **mood board** (section above) and wait for the validated

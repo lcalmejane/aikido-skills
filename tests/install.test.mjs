@@ -59,10 +59,11 @@ test('install-aikido.md registers every command and both agents', () => {
   assert.ok(install.includes('.claude/agents/agent-aikido-image-analyst.md'));
   assert.ok(install.includes('slug: agent-aikido-image-analyst'));
   assert.ok(install.includes('skills_list.md') && install.includes('commands_list.md') && install.includes('agents_list.md'));
+  for (const setting of ['discover', 'setup', '.local-designer.json', 'preserv']) assert.ok(install.includes(setting), setting);
 });
 
 test('markdown links inside the skill point to existing files', () => {
-  const files = ['SKILL.md', 'install-aikido.md', 'agents/agent-aikido-art-director.md', 'agents/agent-aikido-image-analyst.md', 'references/vision.md',
+  const files = ['SKILL.md', 'install-aikido.md', 'agents/agent-aikido-art-director.md', 'agents/agent-aikido-image-analyst.md', 'references/vision.md', 'references/runtime-configuration.md', 'references/people-and-casting.md',
     'references/preview.md', 'references/art-direction.md', 'references/character-design.md', 'commands/aikido-design-brief.md',
     'commands/aikido-design-moodboard.md', 'commands/aikido-design-render.md', 'commands/aikido-design-style.md', 'commands/aikido-init-design.md',
     'commands/aikido-design-charter.md', 'commands/aikido-design-audit.md', 'commands/aikido-design-uikit.md', 'references/uikit.md'];

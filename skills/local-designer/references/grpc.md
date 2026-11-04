@@ -8,7 +8,7 @@ server really holds.
 
 | | `drawthing` (HTTP) | `drawthing-grpc` |
 |---|---|---|
-| Port | 7860 | 7859 |
+| Default port | 7860 | 7860 |
 | App setting | API Server, protocol HTTP | API Server, protocol gRPC |
 | Models, LoRA, ControlNets | Not listed: use the names shown in the app | **Listed by the server** (file, name, family, default size) |
 | Model chosen per request | Only what is loaded in the app | Any model the server has |
@@ -22,7 +22,10 @@ with `--connector drawthing-grpc`.
 
 ## Prerequisite
 
-In Draw Things, advanced settings: enable **API Server**, protocol **gRPC**, port **7859**. Keep the app open.
+In Draw Things, advanced settings: enable **API Server**, protocol **gRPC**, port **7860**. Keep the app open.
+HTTP and gRPC are alternative protocols on the configured port, not simultaneous
+listeners on the same address. Override `--grpc host:port` for another setup,
+including an existing server on port 7859.
 
 ```bash
 node scripts/local-designer.mjs status --connector drawthing-grpc
@@ -38,7 +41,7 @@ node scripts/local-designer.mjs status --connector drawthing-grpc --full   # eve
 
 | Option | Env | Role |
 |---|---|---|
-| `--grpc host:port` | `DRAWTHING_GRPC` | Server address. Default `127.0.0.1:7859`. A `grpcs://` prefix and `[::1]:port` are accepted |
+| `--grpc host:port` | `DRAWTHING_GRPC` | Server address. Default `127.0.0.1:7860`. A `grpcs://` prefix and `[::1]:port` are accepted |
 | `--fingerprint AA:BB:..` | `DRAWTHING_FINGERPRINT` | SHA-256 of the server certificate you trust |
 | `--insecure-tls` | | Accept any certificate. Last resort, says so in the result |
 | `--no-tls` | | Clear text. Allowed on loopback only, unless `--insecure-tls` is also given |

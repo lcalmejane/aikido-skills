@@ -1,5 +1,5 @@
 // Draw Things connector over gRPC: the transport the app uses for its own "server offload" and "Cloud Compute".
-// It talks to the same server on the same Mac (port 7859 by default) or on another machine / a cloud box, with
+// It talks to the same server on the same Mac (port 7860 by default) or on another machine / a cloud box, with
 // one extra capability compared with the HTTP API: the full list of models and LoRA the server really has.
 // Everything engine specific lives under this folder; the rest of the tool only sees the connector contract
 // described in ../../../references/connectors.md.
@@ -12,9 +12,9 @@ import { CONFIG_FIELDS, CONTROL_FIELDS, ENUMS, LORA_FIELDS } from './config-sche
 import { encodeTable } from './flatbuffers.mjs';
 import { collect, fields, message } from './protobuf.mjs';
 import { imageToTensor, tensorToImage } from './tensor.mjs';
-import { GrpcError, call, isLoopback, openChannel, parseTarget } from './transport.mjs';
+import { DEFAULT_TARGET, GrpcError, call, isLoopback, openChannel, parseTarget } from './transport.mjs';
 
-export const DEFAULT_TARGET = '127.0.0.1:7859';
+export { DEFAULT_TARGET };
 export const CLIENT_NAME = 'local-designer';
 export const META_KEY = 'local-designer';
 const TYPES = { LoRA: LORA_FIELDS, Control: CONTROL_FIELDS };
@@ -126,7 +126,7 @@ function readSecret(opts, env = process.env) {
 
 const SERVER_HINT =
   'Draw Things gRPC server not reachable. In Draw Things, open the advanced settings, enable "API Server" with protocol gRPC ' +
-  '(default port 7859), keep the app open, then retry (or set DRAWTHING_GRPC / --grpc host:port).';
+  `(default ${DEFAULT_TARGET}), keep the app open, then retry (or set DRAWTHING_GRPC / --grpc host:port).`;
 
 const explain = (e) => (/ECONNREFUSED|ECONNRESET|ENOTFOUND|EHOSTUNREACH|Timeout/.test(`${e.message}${e.code}`) ? new Error(`${SERVER_HINT} (${e.message || e.code})`) : e);
 

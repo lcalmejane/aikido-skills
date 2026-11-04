@@ -61,6 +61,10 @@ Follow [`../references/art-direction.md`](../references/art-direction.md). In sh
 - Never put a mood board, a render or a path to one in the charter; it holds text and hex colours only.
 - `charter audit` is a colour heuristic: it points at a drift, it does not judge the image.
 - Synthetic people only; never a real person's name or a living artist's name in a prompt.
+- Apply [people and casting](../references/people-and-casting.md) before every human
+  scene: distinct faces, varied gender presentation and adult ages by default,
+  audience-specific constraints in the brief, equally active roles. Preserve approved
+  character sheets; clones require an explicit concept. Reject accidental duplicates.
 - Do not put text or numbers in an image: leave room for them and say so.
 - `project-scan` reads names, README and style sheets only; never open secrets, `.env` or files outside the folder.
 - Answer in the user's language; keep prompts in English (models follow them better).

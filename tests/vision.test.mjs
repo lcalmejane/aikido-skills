@@ -174,6 +174,16 @@ test('checks come from the brief: subject, forbidden list, constraints, then the
   assert.match(prompt, /JSON only/);
 });
 
+test('default people checks reject accidental clones while preserving explicit concepts and designed characters', () => {
+  const faces = DEFAULT_CHECKS.find((check) => check.includes('cloned face'));
+  const casting = DEFAULT_CHECKS.find((check) => check.includes('visible casting'));
+  assert.match(faces, /explicitly requested clones/);
+  assert.match(faces, /designed character/);
+  assert.match(casting, /brief and audience/);
+  assert.match(casting, /gender presentation and adult ages/);
+  assert.match(casting, /do not infer identity or origin/);
+});
+
 // The CLI runs in a child process: the stand-in server lives in this one, so the child must not block the event loop.
 function runCli(args, { cwd, env }) {
   return new Promise((ok) => {

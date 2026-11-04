@@ -67,7 +67,7 @@ test('resolveConnector: explicit choice, environment, then auto', async () => {
     const originals = silenced.map((c) => c.detect);
     silenced.forEach((c) => { c.detect = async () => false; });
     try {
-      assert.equal((await resolveConnector({}, {})).id, 'probe-yes');
+      assert.equal((await resolveConnector({ connector: 'auto' }, {})).id, 'probe-yes');
     } finally {
       silenced.forEach((c, i) => { c.detect = originals[i]; });
     }
@@ -84,7 +84,7 @@ test('auto selection probes every engine and falls back to the default when none
   const { c } = fakeConnector('probe-no');
   registerConnector(c);
   try {
-    assert.equal((await resolveConnector({}, {})).id, 'drawthing', 'nothing answers: the default gives its usual hint');
+    assert.equal((await resolveConnector({ connector: 'auto' }, {})).id, 'drawthing', 'nothing answers: the default gives its usual hint');
     assert.deepEqual(probed, ['drawthing', 'drawthing-grpc']);
   } finally {
     unregisterConnector('probe-no');

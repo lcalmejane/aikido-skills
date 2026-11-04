@@ -186,8 +186,16 @@ test('starting points follow the model family', () => {
 });
 
 test('addresses and the clear-text safety rule', () => {
+  assert.deepEqual(parseTarget(), { host: '127.0.0.1', port: 7860 });
+  assert.deepEqual(parseTarget('[::1]'), { host: '::1', port: 7860 });
+  assert.deepEqual(parseTarget('127.0.0.1:7859'), { host: '127.0.0.1', port: 7859 });
+  assert.throws(() => parseTarget('localhost:0'), /Invalid gRPC port/);
+  assert.throws(() => parseTarget('localhost:65536'), /Invalid gRPC port/);
+  assert.equal(connectionOptions({}, {}).port, 7860);
+  assert.equal(connectionOptions({}, { DRAWTHING_GRPC: 'localhost:7859' }).port, 7859);
+  assert.equal(connectionOptions({ grpc: 'localhost:9000' }, { DRAWTHING_GRPC: 'localhost:7859' }).port, 9000);
   assert.deepEqual(parseTarget('192.168.1.5:7000'), { host: '192.168.1.5', port: 7000 });
-  assert.deepEqual(parseTarget('grpcs://box.example.com'), { host: 'box.example.com', port: 7859 });
+  assert.deepEqual(parseTarget('grpcs://box.example.com'), { host: 'box.example.com', port: 7860 });
   assert.deepEqual(parseTarget('[::1]:9'), { host: '::1', port: 9 });
   assert.throws(() => connectionOptions({ grpc: '10.0.0.4:7859', 'no-tls': true }, {}), /clear text/);
   assert.equal(connectionOptions({ grpc: '10.0.0.4:7859', 'no-tls': true, 'insecure-tls': true }, {}).useTls, false);

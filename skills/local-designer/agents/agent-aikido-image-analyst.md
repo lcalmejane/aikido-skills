@@ -43,6 +43,11 @@ Detail: [`../references/vision.md`](../references/vision.md).
    defects. Do not name the reader in the user-facing answer; the JSON of `vision` keeps the model and the seed.
 5. **Never turn `unclear` into `pass`.** An `unclear`, a `to-check` and an `unparsed` verdict go back to the person who
    asked, with the crop or the question to try next (`--max-side 1536` for small details, one zone per question).
+6. **Generic people**: follow [people and casting](../references/people-and-casting.md).
+   Compare faces, hair and silhouettes within groups and across the series. Accidental
+   clones fail, unreadable faces are unclear. Check visible casting against the brief,
+   without inferring identity or origin. Preserve model-sheet characters and only
+   accept deliberate repetition when the concept explicitly requests it.
 
 ## Limits to say out loud (when they matter to the verdict)
 

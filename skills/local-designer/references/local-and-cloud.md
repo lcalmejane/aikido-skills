@@ -25,7 +25,7 @@ node scripts/local-designer.mjs status --url http://192.168.1.20:7860
 - The API server has **no authentication** by default: use only on a trusted LAN, or through an SSH tunnel
   (`ssh -L 7860:127.0.0.1:7860 user@host`, then keep the default URL). Never expose it on the internet.
 - The script uses plain `http`/`https` URLs only.
-- **Over gRPC** the same machine is reached with `--grpc 192.168.1.20:7859 --fingerprint <sha256>`: the traffic is
+- **Over gRPC** the same machine is reached with `--grpc 192.168.1.20:7860 --fingerprint <sha256>`: the traffic is
   encrypted and the server's certificate is pinned, which the HTTP mode cannot offer. Prefer it for anything beyond
   the local Mac. A shared secret can be required by the server and is passed with `--secret-file`.
 

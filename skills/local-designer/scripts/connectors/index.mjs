@@ -2,6 +2,7 @@
 // The contract is documented in references/connectors.md and checked by validateConnector().
 import { connector as drawthing } from './drawthing.mjs';
 import { connector as drawthingGrpc } from './drawthing-grpc/index.mjs';
+import { engineOptions } from '../engine-config.mjs';
 
 export const DEFAULT_CONNECTOR = 'drawthing';
 const REGISTRY = new Map();
@@ -48,6 +49,7 @@ export function getConnector(id) {
 // registered connector in order and takes the first that answers, falling back to the default so the usual
 // "engine not reachable" hint is what the user sees.
 export async function resolveConnector(opts = {}, env = process.env) {
+  opts = engineOptions(opts, { env });
   const asked = (opts.connector && opts.connector !== true ? String(opts.connector) : env.LOCAL_DESIGNER_CONNECTOR) || 'auto';
   if (asked !== 'auto') return getConnector(asked);
   const all = listConnectors();

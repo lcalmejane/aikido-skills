@@ -49,6 +49,8 @@ Always render the composition with `styles thumb <name>` before trusting it.
 4. **Light and colour**: name 2-4 colours, ideally the brand palette from `project-scan` or `analyze` (use names, the model ignores hex codes).
 5. **Constraints**: "no text" for anything that must carry words (add text in the layout tool), plain or soft background for slides.
 6. **People**: synthetic people only. Never name or describe a real person; for photo styles avoid close-up hands.
+   Apply [people and casting](people-and-casting.md): distinct humans, varied casting
+   adapted to the audience, equally active roles, no accidental clones. Preserve model-sheet characters.
 7. **Consistency across a set**: same style, model, steps, guidance, aspect ratio; change only subject and seed.
 8. **A recurring character** (mascot, hero): do not describe it from memory. Measure the reference image in head units and write the
    proportions, joints and limbs into a fixed block ([`character-design.md`](character-design.md)).

@@ -24,6 +24,8 @@ import {
 import { pngSize, decodePng } from './png.mjs';
 import { auditImage, auditZones, gridOverlay, measureLandmarks, planToPng, renderPlan, validateSpec } from './character-lib.mjs';
 import { designMoodboardsDir, isInside, resolveDesignDir } from './design-target.mjs';
+import { engineOptions, loadEngineConfig } from './engine-config.mjs';
+import { discoverEngines, setupEngine } from './engine-setup.mjs';
 import {
   DEFAULT_CHECKS, askVision, checksFromBrief, listVisionModels, loadVisionConfig, pinVision, reviewPrompt, summariseReview, visionStatus,
 } from './vision-lib.mjs';
@@ -151,6 +153,7 @@ ${cards}
 
 // Resolves the connector (--connector, $LOCAL_DESIGNER_CONNECTOR, else auto) and connects to its engine.
 async function openSession(opts) {
+  opts = engineOptions(opts);
   const connector = await resolveConnector(opts);
   return { connector, session: await connector.connect(opts) };
 }
@@ -182,6 +185,8 @@ export function assertSupported(connector, opts) {
 async function cmdStatus(opts) {
   const { connector, session } = await openSession(opts);
   const result = { status: 'ok', connector: connector.id, ...connector.describe(session, { full: Boolean(opts.full) }) };
+  const { file, engine } = loadEngineConfig();
+  if (engine) result.configuration = { file, engine };
   const legacy = planMigration(homedir());
   if (legacy.length) result.notice = `Data kept under the former name (drawthing) found: run "migrate" to move it (${legacy.map((s) => s.from).join(', ')}).`;
   return result;
@@ -189,6 +194,8 @@ async function cmdStatus(opts) {
 
 // Generates one image. `ctx` ({ connector, session }) can be passed to avoid reconnecting in a sweep.
 export async function generateOne(ctx, opts) {
+  const modelOverride = opts.model ?? (process.env.DRAWTHING_MODEL || undefined);
+  opts = engineOptions(opts);
   if (!opts.out || opts.out === true) throw new Error('--out <file.png> is required');
   const out = resolve(String(opts.out));
   if (!out.toLowerCase().endsWith('.png')) throw new Error('--out must end with .png');
@@ -233,7 +240,7 @@ export async function generateOne(ctx, opts) {
     strength: opts.strength ?? (initImage ? 0.7 : undefined),
     seedMode: opts['seed-mode'],
     clipSkip: opts['clip-skip'],
-    model: opts.model ?? from?.model,
+    model: modelOverride ?? from?.model ?? opts.model,
     plain: Boolean(opts.plain),
     lora: opts.lora ?? [],
     set: opts.set ?? [],
@@ -329,12 +336,13 @@ function cmdInspect(opts) {
 
 // Which engines are registered and which one answers right now.
 async function cmdConnectors(opts) {
-  const chosen = await resolveConnector(opts).catch(() => null);
+  opts = engineOptions(opts);
+  const chosen = await resolveConnector(opts);
   const list = [];
   for (const c of listConnectors()) {
     list.push({ id: c.id, label: c.label, supports: c.supports, reachable: typeof c.detect === 'function' ? await c.detect(opts) : null, selected: chosen?.id === c.id });
   }
-  return { status: 'ok', default: DEFAULT_CONNECTOR, selection: 'auto: --connector, then $LOCAL_DESIGNER_CONNECTOR, then the first reachable', connectors: list };
+  return { status: 'ok', default: DEFAULT_CONNECTOR, selection: '--connector, environment, project engine configuration, then auto', connectors: list };
 }
 
 // Moves data kept under the former name (drawthing) to the local-designer names; --dry-run only lists.
@@ -848,6 +856,9 @@ async function cmdMoodboard(opts) {
 }
 
 const USAGE = `Usage: local-designer.mjs <command> [options]
+  discover                      Inspect this machine and probe known loopback endpoints; never writes configuration
+  setup [--connector drawthing-grpc --grpc 127.0.0.1:7860] [--model file.ckpt]
+                                Verify and persist engine settings in the nearest .local-designer.json
   status [--full]                Check the image engine (connector); --full dumps every setting it exposes
   connectors                     List the registered engines and which one answers
   migrate [--dry-run]            Move data kept under the former name (drawthing) to local-designer
@@ -915,7 +926,9 @@ async function main() {
     // One design target for the charter, the styles and the mood boards (see design-target.mjs).
     if (optStr(opts, 'design-dir')) process.env.LOCAL_DESIGNER_DESIGN_DIR = resolve(optStr(opts, 'design-dir'));
     let result;
-    if (command === 'status') result = await cmdStatus(opts);
+    if (command === 'discover') result = await discoverEngines(opts);
+    else if (command === 'setup') result = await setupEngine(opts);
+    else if (command === 'status') result = await cmdStatus(opts);
     else if (command === 'generate') result = await cmdGenerate(opts);
     else if (command === 'inspect') result = cmdInspect(opts);
     else if (command === 'styles') result = await cmdStyles(opts);

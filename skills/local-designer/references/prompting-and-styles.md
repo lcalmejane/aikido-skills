@@ -11,6 +11,9 @@
 - Modern models (Qwen Image, Flux, SD3) understand full sentences; SD 1.5/SDXL like comma-separated tags.
 - Weights such as `(word:1.3)` only work on SD-family models.
 - Colours: use names ("navy blue, coral, warm grey"), the model ignores hex codes.
+- Generic humans: [people and casting](people-and-casting.md) requires distinct
+  faces, positions and actions, with varied casting adapted to the audience.
+  Write these details into the prompt; "diverse team" alone is not enough.
 
 ## Render styles (presets in `styles/*.json`)
 
