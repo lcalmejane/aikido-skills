@@ -7,10 +7,12 @@ repositories from which compatible skills can be imported.
 
 | Skill | Category | Purpose |
 |---|---|---|
-| `jira` | integration | Bidirectional JIRA Cloud sync, Agile KPIs, HTML reports |
-| `confluence` | integration | Bidirectional Markdown <-> Confluence Cloud sync |
 | `local-designer` | generation | Local image design: agent-aikido-art-director agent, agent-aikido-image-analyst agent (reads images silently: the project's optional local vision model, otherwise the current model), client brief and mood board with validation lock before generation, UI kit from the brand colours (five personalities, light/dark tokens checked for contrast, components, icons, WebP button and zone images), 29 illustrated render styles, style recommendation (brief, image, project), sweeps, parameter knowledge base. Connector: Draw Things (ComfyUI planned) |
 | `aikido-skill-example` | example | Minimal skeleton to copy |
+
+Private integrations (`jira` and `confluence`) are maintained in the
+restricted [`aikido-skills-private`](https://github.com/lcalmejane/aikido-skills-private)
+catalog and are not published here.
 
 ## Layout
 

@@ -9,25 +9,11 @@
       "path": "skills/aikido-skill-example"
     },
     {
-      "name": "jira",
-      "description": "Bidirectional JIRA Cloud sync, Agile KPI analysis and interactive HTML reports for the AI-KIDO Memory Bank (/aikido-jira-* commands).",
-      "version": "2.0.0",
-      "category": "integration",
-      "path": "skills/jira"
-    },
-    {
       "name": "local-designer",
       "description": "Local image design for agents: agent-aikido-art-director agent and agent-aikido-image-analyst agent (images are read silently: the project's optional local vision-language model, otherwise the current model), structured client brief and mood board (directions shown in several scenes, palette with roles, typography, textures, what each direction rules out, page preview) with a validation lock before generation, a per-project design target (charter, styles, mood boards and UI kit in one versioned folder, /aikido-init-design) with palette audit, a UI kit generated from the brand colours (five personalities to choose from, light and dark tokens checked for contrast, components, icons, WebP button skins and zone backgrounds, /aikido-design-uikit), 29 illustrated render styles, style recommendation from a brief, an image or a project, sweeps kept outside git, parameter knowledge base. Generation through a connector: Draw Things over HTTP or gRPC (server's real model list, TLS with fingerprint, local or remote server), ComfyUI planned.",
       "version": "5.4.0",
       "category": "generation",
       "path": "skills/local-designer"
-    },
-    {
-      "name": "confluence",
-      "description": "Bidirectional Markdown <-> Confluence Cloud sync with YAML metadata and last-write-wins (/aikido-confluence-* commands).",
-      "version": "2.0.0",
-      "category": "integration",
-      "path": "skills/confluence"
     }
   ]
 }
