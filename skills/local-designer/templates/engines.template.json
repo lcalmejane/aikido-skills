@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "servers": [
+    {
+      "id": "local",
+      "type": "drawthing",
+      "protocol": "grpc",
+      "host": "127.0.0.1",
+      "port": 7860,
+      "tls": true,
+      "tls_fingerprint": null,
+      "allow_clear_text": false,
+      "remote": false,
+      "model_policy": "auto",
+      "model": null,
+      "secret": null,
+      "max_concurrent": 1,
+      "priority": 1,
+      "weight": 1,
+      "enabled": true,
+      "roles": [
+        "draft",
+        "sweep",
+        "moodboard",
+        "final"
+      ]
+    },
+    {
+      "id": "comfy",
+      "type": "comfyui",
+      "protocol": "http",
+      "host": "127.0.0.1",
+      "port": 8188,
+      "tls": false,
+      "tls_fingerprint": null,
+      "allow_clear_text": false,
+      "remote": false,
+      "model_policy": "pinned",
+      "model": "model-file.safetensors",
+      "secret": null,
+      "max_concurrent": 1,
+      "priority": 2,
+      "weight": 1,
+      "enabled": false,
+      "roles": [
+        "draft",
+        "sweep"
+      ]
+    }
+  ],
+  "scheduling": {
+    "strategy": "priority",
+    "max_parallel_total": 1,
+    "batch_size": 4,
+    "pause_between_batches_s": 0,
+    "queue_order": "priority",
+    "job_priority": {
+      "final": 1,
+      "moodboard": 2,
+      "draft": 3,
+      "sweep": 4
+    },
+    "timeout_s": 600,
+    "retry": {
+      "max_attempts": 2,
+      "backoff_s": 10
+    },
+    "on_server_failure": "next-server"
+  },
+  "secrets": {
+    "vault_hook": null
+  }
+}

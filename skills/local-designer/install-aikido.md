@@ -47,6 +47,7 @@ or model is updated through `setup` after verification, not by patching defaults
 - **aikido-design-moodboard**: Build the client mood board and record the client's decision ([`aikido-design-moodboard.md`](prompts/hard_points/system/local-designer/commands/aikido-design-moodboard.md))
 - **aikido-design-render**: Generate images: draft, sweep, final behind the validation lock ([`aikido-design-render.md`](prompts/hard_points/system/local-designer/commands/aikido-design-render.md))
 - **aikido-design-style**: Choose, compare, compose and create render styles ([`aikido-design-style.md`](prompts/hard_points/system/local-designer/commands/aikido-design-style.md))
+- **aikido-design-config**: Configure image servers and batch pacing from the engines template ([`aikido-design-config.md`](prompts/hard_points/system/local-designer/commands/aikido-design-config.md))
 - **aikido-design-uikit**: Create and maintain the UI kit: tokens, components, icons, button and zone images ([`aikido-design-uikit.md`](prompts/hard_points/system/local-designer/commands/aikido-design-uikit.md))
 ```
 
@@ -59,7 +60,7 @@ or model is updated through `setup` after verification, not by patching defaults
 
 ### 4. `.roo/commands/` and `.claude/commands/`
 
-One mapping file per command (`aikido-init-design`, `aikido-design-charter`, `aikido-design-audit`, `aikido-design-brief`, `aikido-design-moodboard`, `aikido-design-render`, `aikido-design-style`, `aikido-design-uikit`). Example for
+One mapping file per command (`aikido-init-design`, `aikido-design-charter`, `aikido-design-audit`, `aikido-design-brief`, `aikido-design-moodboard`, `aikido-design-render`, `aikido-design-style`, `aikido-design-uikit`, `aikido-design-config`). Example for
 `aikido-design-moodboard.md`:
 
 ```markdown

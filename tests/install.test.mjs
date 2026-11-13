@@ -41,7 +41,7 @@ test('every command declared in SKILL.md has a definition with a matching name',
   const text = read('SKILL.md');
   const section = text.split(/^## Available Commands\s*$/m)[1]?.split(/^## /m)[0] ?? '';
   const commands = [...section.matchAll(/^- `\/([a-z0-9-]+)/gm)].map((m) => m[1]);
-  assert.deepEqual(commands.sort(), ['aikido-design-audit', 'aikido-design-brief', 'aikido-design-charter', 'aikido-design-moodboard', 'aikido-design-render', 'aikido-design-style', 'aikido-design-uikit', 'aikido-init-design']);
+  assert.deepEqual(commands.sort(), ['aikido-design-audit', 'aikido-design-brief', 'aikido-design-charter', 'aikido-design-config', 'aikido-design-moodboard', 'aikido-design-render', 'aikido-design-style', 'aikido-design-uikit', 'aikido-init-design']);
   for (const cmd of commands) {
     const file = `commands/${cmd}.md`;
     assert.ok(existsSync(join(SKILL, file)), `${file} is missing`);

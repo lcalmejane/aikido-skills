@@ -120,6 +120,8 @@ export function connectionOptions(opts = {}, env = process.env) {
 
 // The shared secret never goes on the command line (it would end up in the shell history).
 function readSecret(opts, env = process.env) {
+  // Resolved in memory from the engine pool (see scripts/secrets.mjs); a Symbol key cannot come from the command line.
+  if (typeof opts[Symbol.for('local-designer.secret')] === 'string') return opts[Symbol.for('local-designer.secret')];
   if (opts['secret-file'] && opts['secret-file'] !== true) return readFileSync(resolve(String(opts['secret-file'])), 'utf8').trim();
   return env.DRAWTHING_SECRET ?? '';
 }

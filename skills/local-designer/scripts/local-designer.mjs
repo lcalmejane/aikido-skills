@@ -2,7 +2,7 @@
 // local-designer: art direction tools plus a connector-based image generation CLI.
 // Zero dependency, Node >= 18.
 // The image engine is a connector (scripts/connectors/): Draw Things today, others can be registered.
-// Commands: status | generate | inspect | styles | sweep | recommend | analyze | match | project-scan | brief | moodboard | charter | uikit | character | vision | connectors | migrate
+// Commands: config | status | generate | inspect | styles | sweep | recommend | analyze | match | project-scan | brief | moodboard | charter | uikit | character | vision | connectors | migrate
 import { existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
@@ -25,7 +25,32 @@ import { pngSize, decodePng } from './png.mjs';
 import { auditImage, auditZones, gridOverlay, measureLandmarks, planToPng, renderPlan, validateSpec } from './character-lib.mjs';
 import { designMoodboardsDir, isInside, resolveDesignDir } from './design-target.mjs';
 import { engineOptions, loadEngineConfig } from './engine-config.mjs';
-import { discoverEngines, setupEngine } from './engine-setup.mjs';
+import { activePool, runJobs } from './pool-runner.mjs';
+
+// Renders a list of jobs on the engine pool (several servers, batches, retries) or on the single engine.
+// Server settings fill only what the caller left unset: an explicit --model still wins over a pinned model.
+async function renderJobs(opts, jobs, render) {
+  const pool = activePool(opts);
+  const onServer = (serverOpts, o) => {
+    const merged = { ...o };
+    for (const [k, v] of Object.entries(serverOpts)) if (merged[k] === undefined) merged[k] = v;
+    for (const s of Object.getOwnPropertySymbols(serverOpts)) merged[s] = serverOpts[s];
+    return merged;
+  };
+  const outcome = await runJobs({
+    pool, jobs,
+    single: () => openSession(opts),
+    connect: async (serverOpts) => {
+      const connector = await resolveConnector(serverOpts);
+      return { connector, session: await connector.connect(serverOpts) };
+    },
+    run: (job, ctx, serverOpts) => render(job, ctx, (o) => onServer(serverOpts, pool ? { ...o, timeout: o.timeout ?? pool.scheduling.timeout_s } : o)),
+    log: (line) => process.stderr.write(`${line}\n`),
+  });
+  return outcome;
+}
+import { discoverEngines, inspectEngine, setupEngine } from './engine-setup.mjs';
+import { MODEL_POLICIES, ROLES, SERVER_TYPES, STRATEGIES, TEMPLATE_FILE, loadTemplate, planJobs, readPool, savePool, validatePool, verifyPool } from './engine-pool.mjs';
 import {
   DEFAULT_CHECKS, askVision, checksFromBrief, listVisionModels, loadVisionConfig, pinVision, reviewPrompt, summariseReview, visionStatus,
 } from './vision-lib.mjs';
@@ -369,34 +394,23 @@ async function makeThumbs(opts, styles, names) {
   const plan = selected.map((n) => ({ style: n, subject: opts.subject && opts.subject !== true ? opts.subject : styles[n].thumb_subject ?? null, thumbnail: thumbFile(styles[n]) }));
   if (opts['dry-run']) return { status: 'dry-run', out_dir: lab, count: plan.length, plan };
 
-  const ctx = await openSession(opts);
   mkdirSync(lab, { recursive: true });
-  const results = [];
   const started = Date.now();
-  for (const [i, item] of plan.entries()) {
-    const entry = { style: item.style };
-    if (!item.subject) {
-      entry.error = 'no thumb_subject in the style and no --subject given';
-      results.push(entry);
-      continue;
-    }
+  const results = plan.map((item) => ({ style: item.style, ...(item.subject ? {} : { error: 'no thumb_subject in the style and no --subject given' }) }));
+  const todo = plan.map((item, i) => ({ id: item.style, role: 'draft', item, entry: results[i] })).filter((t) => t.item.subject);
+  const outcome = await renderJobs(opts, todo, async ({ item, entry }, ctx, on) => {
     const png = join(lab, `${item.style}-s${opts.seed ?? 42}.png`);
-    process.stderr.write(`[${i + 1}/${plan.length}] ${item.style}\n`);
-    try {
-      if (!(opts.resume && existsSync(png))) {
-        await generateOne(ctx, { ...opts, out: png, prompt: item.subject, style: item.style, seed: opts.seed ?? 42, width: opts.width ?? 768, height: opts.height ?? 512, steps: opts.steps ?? 16, sidecar: true });
-      }
-      mkdirSync(dirname(item.thumbnail), { recursive: true });
-      const run = spawnSync('cwebp', ['-quiet', '-q', '78', '-m', '6', '-resize', '384', '256', png, '-o', item.thumbnail], { encoding: 'utf8' });
-      if (run.status !== 0) throw new Error((run.stderr || run.error?.message || 'cwebp failed').trim().slice(0, 200));
-      entry.thumbnail = item.thumbnail;
-      entry.render = png;
-    } catch (error) {
-      entry.error = error.message;
-      process.stderr.write(`  failed: ${error.message}\n`);
+    process.stderr.write(`[thumb] ${item.style}\n`);
+    if (!(opts.resume && existsSync(png))) {
+      await generateOne(ctx, on({ ...opts, out: png, prompt: item.subject, style: item.style, seed: opts.seed ?? 42, width: opts.width ?? 768, height: opts.height ?? 512, steps: opts.steps ?? 16, sidecar: true }));
     }
-    results.push(entry);
-  }
+    mkdirSync(dirname(item.thumbnail), { recursive: true });
+    const run = spawnSync('cwebp', ['-quiet', '-q', '78', '-m', '6', '-resize', '384', '256', png, '-o', item.thumbnail], { encoding: 'utf8' });
+    if (run.status !== 0) throw new Error((run.stderr || run.error?.message || 'cwebp failed').trim().slice(0, 200));
+    entry.thumbnail = item.thumbnail;
+    entry.render = png;
+  });
+  for (const r of outcome.results) if (r.error) todo.find((t) => t.id === r.id).entry.error = r.error;
   return { status: 'ok', out_dir: lab, done: results.filter((r) => !r.error).length, failed: results.filter((r) => r.error).length, seconds: Math.round((Date.now() - started) / 1000), results };
 }
 
@@ -699,36 +713,37 @@ async function cmdSweep(opts) {
   const plan = jobs.map((j) => ({ name: j.name, style: j.style, vary: j.vary, seed: j.seed }));
   if (opts['dry-run']) return { status: 'dry-run', out_dir: dir, count: jobs.length, jobs: plan };
 
-  const ctx = await openSession(opts);
   mkdirSync(dir, { recursive: true });
-  const entries = [];
   const started = Date.now();
-  for (const [n, job] of jobs.entries()) {
-    const file = `${job.name}.png`;
-    const label = [job.style ?? 'raw', ...Object.entries(job.vary).map(([k, v]) => `${k}=${v}`), job.seed === undefined ? '' : `seed ${job.seed}`].filter(Boolean).join(' | ');
-    const entry = { name: job.name, file, label, prompt: job.style ? applyStyle(all[job.style], opts.subject) : opts.subject };
-    if (opts.resume && existsSync(join(dir, file))) {
-      entries.push(entry);
-      continue;
-    }
-    process.stderr.write(`[${n + 1}/${jobs.length}] ${label}\n`);
-    try {
-      const jobOpts = { ...common, ...job.vary, prompt: opts.subject, style: job.style ?? undefined, seed: job.seed ?? common.seed, out: join(dir, file), sidecar: true };
-      if (jobOpts.style === undefined) delete jobOpts.style;
-      const r = await generateOne(ctx, jobOpts);
-      entry.seconds = r.seconds;
-    } catch (error) {
-      entry.error = error.message;
-      process.stderr.write(`  failed: ${error.message}\n`);
-    }
-    entries.push(entry);
+  const entries = jobs.map((job) => ({
+    name: job.name, file: `${job.name}.png`,
+    label: [job.style ?? 'raw', ...Object.entries(job.vary).map(([k, v]) => `${k}=${v}`), job.seed === undefined ? '' : `seed ${job.seed}`].filter(Boolean).join(' | '),
+    prompt: job.style ? applyStyle(all[job.style], opts.subject) : opts.subject,
+  }));
+  const save = () => {
     writeFileSync(join(dir, 'index.html'), renderIndexHtml(`local-designer sweep - ${opts.subject}`, entries));
     writeFileSync(join(dir, 'index.json'), `${JSON.stringify({ subject: opts.subject, settings: common, entries }, null, 2)}\n`);
+  };
+  const todo = jobs.map((job, n) => ({ id: job.name, role: optStr(opts, 'role') ?? 'sweep', job, entry: entries[n] }))
+    .filter((t) => !(opts.resume && existsSync(join(dir, t.entry.file))));
+  const outcome = await renderJobs(opts, todo, async (t, ctx, on) => {
+    const jobOpts = { ...common, ...t.job.vary, prompt: opts.subject, style: t.job.style ?? undefined, seed: t.job.seed ?? common.seed, out: join(dir, t.entry.file), sidecar: true };
+    if (jobOpts.style === undefined) delete jobOpts.style;
+    process.stderr.write(`[${t.id}] ${t.entry.label}\n`);
+    const r = await generateOne(ctx, on(jobOpts));
+    t.entry.seconds = r.seconds;
+    save();
+    return r;
+  });
+  for (const r of outcome.results) {
+    const t = todo.find((x) => x.id === r.id);
+    if (r.error) t.entry.error = r.error;
+    if (r.server && outcome.mode === 'pool') t.entry.server = r.server;
   }
-  writeFileSync(join(dir, 'index.html'), renderIndexHtml(`local-designer sweep - ${opts.subject}`, entries));
-  writeFileSync(join(dir, 'index.json'), `${JSON.stringify({ subject: opts.subject, settings: common, entries }, null, 2)}\n`);
+  save();
   return {
     status: 'ok',
+    engine: outcome.mode,
     out_dir: dir,
     index: join(dir, 'index.html'),
     images: entries.filter((e) => !e.error).length,
@@ -786,29 +801,30 @@ async function runTrials(dir, opts) {
   const upper = (key) => optStr(opts, key)?.split(',').map((s) => s.trim().toUpperCase()).filter(Boolean);
   const onlyTracks = upper('track');
   const onlyScenes = optStr(opts, 'scene')?.split(',').map((s) => s.trim()).filter(Boolean);
-  const ctx = await openSession(opts);
   const long = Number(opts.size ?? 640);
   const trials = [];
+  const todo = [];
   for (const t of board.tracks) {
     if (onlyTracks && !onlyTracks.includes(t.id)) continue;
     for (const scene of scenes) {
       if (onlyScenes && !onlyScenes.includes(scene.id)) continue;
-      const out = trialPath(dir, t.id, scene.id);
       const done = trialImage(dir, t.id, scene.id);
-      if (opts.resume && done) { trials.push({ track: t.id, scene: scene.id, file: done, reused: true }); continue; }
-      const size = sizeFromRatio(scene.ratio ?? brief.format?.ratio ?? '4:3', long);
-      process.stderr.write(`[trial ${t.id}/${scene.id}] ${t.style}\n`);
-      try {
-        const r = await generateOne(ctx, { prompt: scene.subject, style: t.style, negative: t.negative || undefined, out, width: size.width, height: size.height, steps: opts.steps ?? 8, seed: opts.seed ?? 42,
-          sidecar: true, webp: true, quality: opts.quality ?? 80, timeout: opts.timeout, model: opts.model });
-        if (r.webp) rmSync(out, { force: true }); // keep the png only when the conversion failed
-        trials.push({ track: t.id, scene: scene.id, file: r.webp ?? out });
-      } catch (error) {
-        trials.push({ track: t.id, scene: scene.id, error: error.message });
-        process.stderr.write(`  failed: ${error.message}\n`);
-      }
+      const entry = { track: t.id, scene: scene.id };
+      trials.push(entry);
+      if (opts.resume && done) { Object.assign(entry, { file: done, reused: true }); continue; }
+      todo.push({ id: `${t.id}-${scene.id}`, role: 'moodboard', t, scene, entry });
     }
   }
+  const outcome = await renderJobs(opts, todo, async ({ t, scene, entry }, ctx, on) => {
+    const out = trialPath(dir, t.id, scene.id);
+    const size = sizeFromRatio(scene.ratio ?? brief.format?.ratio ?? '4:3', long);
+    process.stderr.write(`[trial ${t.id}/${scene.id}] ${t.style}\n`);
+    const r = await generateOne(ctx, on({ prompt: scene.subject, style: t.style, negative: t.negative || undefined, out, width: size.width, height: size.height, steps: opts.steps ?? 8, seed: opts.seed ?? 42,
+      sidecar: true, webp: true, quality: opts.quality ?? 80, timeout: opts.timeout, model: opts.model }));
+    if (r.webp) rmSync(out, { force: true }); // keep the png only when the conversion failed
+    entry.file = r.webp ?? out;
+  });
+  for (const r of outcome.results) if (r.error) todo.find((x) => x.id === r.id).entry.error = r.error;
   return { trials, html: rebuildMoodboardHtml(dir) };
 }
 
@@ -855,7 +871,76 @@ async function cmdMoodboard(opts) {
   throw new Error('Usage: moodboard build|decide|trial|status|html ...');
 }
 
+// Engine pool configuration (servers, protocols, model policy, batch pacing). See commands/aikido-design-config.md.
+function poolFromLegacy(engine) {
+  if (!engine) return undefined;
+  const pool = loadTemplate();
+  const grpc = engine.connector === 'drawthing-grpc';
+  const target = grpc ? engine.grpc : new URL(engine.url);
+  const [host, port] = grpc ? [target.slice(0, target.lastIndexOf(':')), Number(target.slice(target.lastIndexOf(':') + 1))] : [target.hostname, Number(target.port || (target.protocol === 'https:' ? 443 : 80))];
+  Object.assign(pool.servers[0], {
+    protocol: grpc ? 'grpc' : 'http', host, port, tls: grpc ? true : target.protocol === 'https:',
+    model_policy: engine.model ? 'pinned' : grpc ? 'auto' : 'server', model: engine.model ?? null,
+  });
+  return pool;
+}
+
+async function cmdConfig(opts) {
+  const sub = opts._[0] ?? 'show';
+  const fromFile = () => {
+    const file = optStr(opts, 'file');
+    if (!file) return undefined;
+    const data = JSON.parse(readFileSync(resolve(file), 'utf8'));
+    return data.engines ?? data;
+  };
+  if (sub === 'template') {
+    const out = optStr(opts, 'out');
+    const template = loadTemplate();
+    if (!out) return { status: 'ok', template_file: TEMPLATE_FILE, template, server_types: SERVER_TYPES, model_policies: MODEL_POLICIES, strategies: STRATEGIES, roles: ROLES };
+    if (existsSync(resolve(out)) && !opts.force) throw new Error(`${out} exists; pass --force to replace it`);
+    writeFileSync(resolve(out), `${JSON.stringify(template, null, 2)}\n`);
+    return { status: 'ok', written: resolve(out), next: 'Fill it with the user, then: config check --file <f>, config apply --file <f> --verify' };
+  }
+  if (sub === 'show') {
+    const { file, pool, config } = readPool();
+    if (pool) return { status: 'ok', file, engines: pool, engine: config.engine };
+    return { status: 'ok', file, engines: null, engine: config.engine ?? null, suggested: poolFromLegacy(config.engine) ?? loadTemplate(), hint: 'No engine pool yet: run /aikido-design-config to fill one.' };
+  }
+  if (sub === 'check') {
+    const pool = fromFile() ?? readPool().pool;
+    if (!pool) throw new Error('No engines configuration: pass --file <f> or run config apply first');
+    const { errors, warnings } = validatePool(pool);
+    return { status: errors.length ? 'error' : 'ok', errors, warnings };
+  }
+  if (sub === 'apply') {
+    const pool = fromFile();
+    if (!pool) throw new Error('Usage: config apply --file <f> [--verify] [--dry-run]');
+    const { errors, warnings } = validatePool(pool);
+    if (errors.length) return { status: 'error', errors, warnings };
+    let verification;
+    if (opts.verify) {
+      verification = await verifyPool(pool, { inspect: (o) => inspectEngine(o) });
+      if (verification.some((r) => r.status !== 'ok')) return { status: 'error', verification, hint: 'Nothing was saved. Fix the server, disable it, or confirm its settings with the user.' };
+    }
+    if (opts['dry-run']) return { status: 'dry-run', warnings, verification };
+    return { status: 'ok', ...savePool(pool, { verifiedAt: verification ? new Date().toISOString() : undefined }), verification };
+  }
+  if (sub === 'plan') {
+    const pool = fromFile() ?? readPool().pool;
+    if (!pool) throw new Error('No engines configuration: run /aikido-design-config first');
+    const jobs = Number(optStr(opts, 'jobs'));
+    if (!Number.isInteger(jobs) || jobs < 1) throw new Error('config plan needs --jobs <n>');
+    const role = optStr(opts, 'role') ?? 'final';
+    if (!ROLES.includes(role)) throw new Error(`--role must be one of ${ROLES.join(', ')}`);
+    return { status: 'ok', ...planJobs(pool, jobs, { role }) };
+  }
+  throw new Error('Usage: config template [--out f] | show | check [--file f] | apply --file f [--verify] [--dry-run] | plan --jobs n [--role r]');
+}
+
 const USAGE = `Usage: local-designer.mjs <command> [options]
+  config [template|show|check|apply|plan]
+                                sweep, styles thumb and moodboard trial render on the pool; --no-pool or an explicit engine bypasses it
+                                Engine pool: servers, protocol, model policy, concurrency and batch pacing (see /aikido-design-config)
   discover                      Inspect this machine and probe known loopback endpoints; never writes configuration
   setup [--connector drawthing-grpc --grpc 127.0.0.1:7860] [--model file.ckpt]
                                 Verify and persist engine settings in the nearest .local-designer.json
@@ -928,6 +1013,7 @@ async function main() {
     let result;
     if (command === 'discover') result = await discoverEngines(opts);
     else if (command === 'setup') result = await setupEngine(opts);
+    else if (command === 'config') result = await cmdConfig(opts);
     else if (command === 'status') result = await cmdStatus(opts);
     else if (command === 'generate') result = await cmdGenerate(opts);
     else if (command === 'inspect') result = cmdInspect(opts);

@@ -29,7 +29,7 @@ The contract and how to add a connector are in [`references/connectors.md`](refe
 
 ## Metadata
 - **Name**: local-designer
-- **Version**: 5.4.0
+- **Version**: 5.5.0
 - **Category**: generation
 - **Requires**: Node.js 18+, `cwebp` (WebP export, thumbnails), ImageMagick or `sips` (image analysis). For generation with the Draw Things connector: macOS and the app with its API server enabled
 
@@ -174,6 +174,7 @@ image does not stop the sweep.
 - `/aikido-init-design` – Create the project design charter (palette, typography, render style) in `prompts/gen/concepts/design/`
 - `/aikido-design-charter` – Read, check, update and annotate the charter; generate images under its identity
 - `/aikido-design-audit` – Check images or a folder against the charter palette and report the drift
+- `/aikido-design-config` – Configure image servers (type, address, port, protocol, model policy, concurrency) and batch prioritisation and pacing, from the engines template
 - `/aikido-design-uikit` – Create and maintain the UI kit (tokens, components, icons, button and zone images) from the brand colours
 - `/aikido-design-brief` – Write and validate the structured client brief (questions, project scan, `brief check`)
 - `/aikido-design-moodboard` – Build the client mood board (3 directions, optional real-subject trials) and record the client's decision
